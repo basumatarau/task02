@@ -20,8 +20,9 @@ USE `task02` ;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `task02`.`countries` (
   `id_country` INT NOT NULL AUTO_INCREMENT,
-  `country` VARCHAR(100) NULL,
-PRIMARY KEY (`id_country`))
+  `country` VARCHAR(100) NOT NULL,
+PRIMARY KEY (`id_country`),
+UNIQUE INDEX `id_country_UNIQUE` (`id_country` ASC))
 ENGINE = InnoDB;
 
 
@@ -30,7 +31,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `task02`.`cities` (
   `id_city` INT NOT NULL AUTO_INCREMENT,
-  `city` VARCHAR(100) NULL,
+  `city` VARCHAR(100) NOT NULL,
 `fid_country` INT NOT NULL,
 PRIMARY KEY (`id_city`),
 INDEX `fk_cities_countries_idx` (`fid_country` ASC),
@@ -51,10 +52,10 @@ CREATE TABLE IF NOT EXISTS `task02`.`addresses` (
 `fid_city` INT NOT NULL,
 PRIMARY KEY (`id_address`),
 INDEX `fk_addresses_cities1_idx` (`fid_city` ASC),
-CONSTRAINT `fk_addresses_cities1`
+CONSTRAINT `fk_addresses_cities`
 FOREIGN KEY (`fid_city`)
 REFERENCES `task02`.`cities` (`id_city`)
-  ON DELETE CASCADE
+  ON DELETE RESTRICT
   ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
@@ -64,7 +65,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `task02`.`companies` (
   `id_company` INT NOT NULL AUTO_INCREMENT,
-  `name` VARCHAR(100) NULL,
+  `name` VARCHAR(100) NOT NULL,
 PRIMARY KEY (`id_company`))
 ENGINE = InnoDB;
 
@@ -74,9 +75,8 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `task02`.`employees` (
   `id_employee` INT NOT NULL AUTO_INCREMENT,
-  `first_name` VARCHAR(100) NULL,
-`last_name` VARCHAR(100) NULL,
-`position` VARCHAR(50) NULL,
+  `first_name` VARCHAR(100) NOT NULL,
+`last_name` VARCHAR(100) NOT NULL,
 PRIMARY KEY (`id_employee`))
 ENGINE = InnoDB;
 
@@ -85,17 +85,17 @@ ENGINE = InnoDB;
 -- Table `task02`.`address_book`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `task02`.`address_book` (
-  `id_address` INT NOT NULL,
-  `id_company` INT NOT NULL,
-  PRIMARY KEY (`id_address`, `id_company`),
-INDEX `fk_address_book_companies1_idx` (`id_company` ASC),
-CONSTRAINT `fk_address_book_addresses1`
-FOREIGN KEY (`id_address`)
+  `fid_company` INT NOT NULL,
+  `fid_address` INT NOT NULL,
+  PRIMARY KEY (`fid_company`, `fid_address`),
+INDEX `fk_address_book_addresses1_idx` (`fid_address` ASC),
+CONSTRAINT `fk_address_book_addresses`
+FOREIGN KEY (`fid_address`)
 REFERENCES `task02`.`addresses` (`id_address`)
   ON DELETE CASCADE
   ON UPDATE CASCADE,
-CONSTRAINT `fk_address_book_companies1`
-FOREIGN KEY (`id_company`)
+CONSTRAINT `fk_address_book_companies`
+FOREIGN KEY (`fid_company`)
 REFERENCES `task02`.`companies` (`id_company`)
   ON DELETE CASCADE
   ON UPDATE CASCADE)
@@ -106,18 +106,49 @@ ENGINE = InnoDB;
 -- Table `task02`.`employee_register`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `task02`.`employee_register` (
-  `id_company` INT NULL,
-  `id_employee` INT NOT NULL,
-PRIMARY KEY (`id_company`, `id_employee`),
-INDEX `fk_employee_register_employees1_idx` (`id_employee` ASC),
-CONSTRAINT `fk_employee_register_companies1`
-FOREIGN KEY (`id_company`)
+  `fid_employee` INT NOT NULL,
+  `fid_company` INT NOT NULL,
+  PRIMARY KEY (`fid_employee`, `fid_company`),
+INDEX `fk_employee_register_companies1_idx` (`fid_company` ASC),
+CONSTRAINT `fk_employee_register_companies`
+FOREIGN KEY (`fid_company`)
 REFERENCES `task02`.`companies` (`id_company`)
   ON DELETE CASCADE
   ON UPDATE CASCADE,
-CONSTRAINT `fk_employee_register_employees1`
-FOREIGN KEY (`id_employee`)
+CONSTRAINT `fk_employee_register_employees`
+FOREIGN KEY (`fid_employee`)
 REFERENCES `task02`.`employees` (`id_employee`)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `task02`.`job_positions`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `task02`.`job_positions` (
+  `id_job_position` INT NOT NULL AUTO_INCREMENT,
+  `position` VARCHAR(100) NOT NULL,
+PRIMARY KEY (`id_job_position`))
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `task02`.`job_position_register`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `task02`.`job_position_register` (
+  `fid_employee` INT NOT NULL,
+  `fid_job_position` INT NOT NULL,
+  PRIMARY KEY (`fid_employee`, `fid_job_position`),
+INDEX `fk_position_register_job_positions1_idx` (`fid_job_position` ASC),
+CONSTRAINT `fk_position_register_employees`
+FOREIGN KEY (`fid_employee`)
+REFERENCES `task02`.`employees` (`id_employee`)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE,
+CONSTRAINT `fk_position_register_job_positions`
+FOREIGN KEY (`fid_job_position`)
+REFERENCES `task02`.`job_positions` (`id_job_position`)
   ON DELETE CASCADE
   ON UPDATE CASCADE)
 ENGINE = InnoDB;

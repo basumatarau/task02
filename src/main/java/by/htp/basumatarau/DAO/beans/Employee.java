@@ -6,7 +6,6 @@ public class Employee {
     private int employeeId;
     private String firstName;
     private String lastName;
-    private String position;
 
     public int getEmployeeId() {
         return employeeId;
@@ -32,14 +31,6 @@ public class Employee {
         this.lastName = lastName;
     }
 
-    public String getPosition() {
-        return position;
-    }
-
-    public void setPosition(String position) {
-        this.position = position;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -47,12 +38,11 @@ public class Employee {
         Employee employee = (Employee) o;
         return employeeId == employee.employeeId &&
                 Objects.equals(firstName, employee.firstName) &&
-                Objects.equals(lastName, employee.lastName) &&
-                Objects.equals(position, employee.position);
+                Objects.equals(lastName, employee.lastName);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(employeeId, firstName, lastName, position);
+        return Objects.hash(employeeId, firstName, lastName);
     }
 }

@@ -14,9 +14,10 @@ import java.util.Map;
 import java.util.Random;
 
 public class RandomGenerators {
-    private static final String MOCKDATA_COUNTRIES_CITIES = "countries.json";
-    private static final String MOCKDATA_COMPANIES = "companies.json";
-    private static final String MOCKDATA_EMPLOYEES = "employees.json";
+    private static final String MOCKDATA_COUNTRIES_CITIES = "mockData/countries-and-cities.json";
+    private static final String MOCKDATA_COMPANIES = "mockData/companies.json";
+    private static final String MOCKDATA_EMPLOYEES = "mockData/employees.json";
+    private static final String MOCKDATA_JOB_POSITIONS = "mockData/positions.json";
     private static final Random rand = new Random();
 
     public static class CountryGen implements Generator<Country> {
@@ -70,14 +71,6 @@ public class RandomGenerators {
             return CITIES.size();
         }
 
-        public Country getRelatedCountry() {
-            return relatedCountry;
-        }
-
-        public void setRelatedCountry(Country relatedCountry) {
-            this.relatedCountry = relatedCountry;
-        }
-
         @Override
         public City next() {
             String cityName = CITIES.remove(Math.abs(rand.nextInt() % CITIES.size()));
@@ -95,18 +88,10 @@ public class RandomGenerators {
             this.relatedCity = relatedCity;
         }
 
-        public City getRelatedCity() {
-            return relatedCity;
-        }
-
-        public void setRelatedCity(City relatedCity) {
-            this.relatedCity = relatedCity;
-        }
-
         @Override
         public Address next() {
             Address address = new Address();
-            address.setAddress("adr. stub#" + counter + " (in " + relatedCity.getCity() + ")");
+            address.setAddress("adr. stub#" + ++counter + " (in " + relatedCity.getCity() + ")");
             return address;
         }
     }
@@ -138,7 +123,6 @@ public class RandomGenerators {
     public static class EmployeeGen implements Generator<Employee> {
         private static final List<String> EMPLOYEE_FIRST_NAMES = new ArrayList<>();
         private static final List<String> EMPLOYEE_LAST_NAMES = new ArrayList<>();
-        private static final List<String> EMPLOYEE_POSITIONS = new ArrayList<>();
 
         {
             try (Reader reader = new FileReader(MOCKDATA_EMPLOYEES)) {
@@ -146,10 +130,8 @@ public class RandomGenerators {
                 for (JsonElement jsonElement : jsonElements) {
                     JsonElement firstName = jsonElement.getAsJsonObject().get("first_name");
                     JsonElement lastName = jsonElement.getAsJsonObject().get("last_name");
-                    JsonElement position = jsonElement.getAsJsonObject().get("position");
                     EMPLOYEE_FIRST_NAMES.add(firstName.getAsString());
                     EMPLOYEE_LAST_NAMES.add(lastName.getAsString());
-                    EMPLOYEE_POSITIONS.add(position.getAsString());
                 }
 
             } catch (IOException e) {
@@ -174,14 +156,35 @@ public class RandomGenerators {
                             )
                     )
             );
-            employee.setPosition(
+            return employee;
+        }
+    }
+    public static class PositionGen implements Generator<Position>{
+        private static final List<String> EMPLOYEE_POSITIONS = new ArrayList<>();
+
+        {
+            try (Reader reader = new FileReader(MOCKDATA_JOB_POSITIONS)) {
+                JsonArray jsonElements = new Gson().fromJson(reader, JsonArray.class);
+                for (JsonElement jsonElement : jsonElements) {
+                    JsonElement position = jsonElement.getAsJsonObject().get("job_position");
+                    EMPLOYEE_POSITIONS.add(position.getAsString());
+                }
+
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        @Override
+        public Position next() {
+            Position position = new Position();
+            position.setName(
                     EMPLOYEE_POSITIONS.get(
                             Math.abs(
                                     rand.nextInt() % EMPLOYEE_POSITIONS.size()
                             )
                     )
             );
-            return employee;
+            return position;
         }
     }
 }

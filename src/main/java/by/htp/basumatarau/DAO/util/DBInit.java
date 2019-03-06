@@ -24,7 +24,10 @@ public class DBInit {
             = "INSERT INTO `task02`.`companies` (`name`) VALUES(?)";
 
     private final static String INSERT_NEW_EMPLOYEE_INTO_EMPLOYEES
-            = "INSERT INTO `task02`.`employees` (`first_name`, `last_name`, `position`) VALUES(?,?,?)";
+            = "INSERT INTO `task02`.`employees` (`first_name`, `last_name`) VALUES(?,?)";
+
+    private final static String INSERT_NEW_POSITION_INTO_POSITIONS
+            = "INSERT INTO `task02`.`job_positions` (`position`) VALUES(?)";
 
     private final static String INSERT_NEW_ENTRY_INTO_ADDRESS_BOOK
             = "INSERT INTO `task02`.`address_book` (`id_address`, `id_company`) VALUES(?,?)";
@@ -39,7 +42,12 @@ public class DBInit {
             = "SELECT * FROM task02.cities as c WHERE c.id_city = ? ";
 
 
-    public static void main(String[] args) throws ClassNotFoundException, SQLException, IOException {
+    public static void main(String[] args) throws ClassNotFoundException, SQLException {
+        setUpDB();
+        populateDB();
+    }
+
+    private static void setUpDB() throws ClassNotFoundException, SQLException {
         Class.forName("com.mysql.cj.jdbc.Driver");
 
         try (Connection conection = DriverManager.getConnection("jdbc:mysql://127.0.0.1/?useSSL=false", "root",
@@ -48,7 +56,9 @@ public class DBInit {
         }catch (IOException e){
             throw new RuntimeException(e);
         }
+    }
 
+    private static void populateDB() throws SQLException {
         Connection con = DriverManager.getConnection("jdbc:mysql://127.0.0.1/task02?useSSL=false", "root",
                 "password");
 
@@ -72,11 +82,8 @@ public class DBInit {
                 INSERT_NEW_EMPLOYEE_INTO_EMPLOYEES,
                 Statement.RETURN_GENERATED_KEYS
         );
-        PreparedStatement psAddressBook = con.prepareStatement(
-                INSERT_NEW_ENTRY_INTO_ADDRESS_BOOK
-        );
-        PreparedStatement psEmployeeRegister = con.prepareStatement(
-                INSERT_NEW_ENTRY_TINO_EMPLOYEE_REGISTER
+        PreparedStatement psPosition = con.prepareStatement(
+                INSERT_NEW_POSITION_INTO_POSITIONS
         );
 
         PreparedStatement psSelectCountryById
@@ -84,71 +91,115 @@ public class DBInit {
         PreparedStatement psSelectCityById
                 = con.prepareStatement(SELECT_CITY_BY_ID);
 
-        populateCountries(con, psCountries, 15);
-        populateCities(con, psCities, psSelectCountryById, 10);
-        populateAddresses(con, psAddresses, psSelectCityById, 5);
-        populateCompanies(con, psCompanies, 100);
+        populateCountries(con, psCountries, 5);
+        populateCities(con, psCities, psSelectCountryById, 6);
+        populateAddresses(con, psAddresses, psSelectCityById, 20);
+        populateCompanies(con, psCompanies, 300);
         populateEmployees(con, psEmployees, 2000);
-
-        makeJoinTable(
-                "companies",
+        populatePositions(con, psPosition, 400);
+        populateJoinTable(
+                "address_book",
                 1,
-                "employees",
-                10,
-                psEmployeeRegister,
                 con
         );
-
-        makeJoinTable(
-                "companies",
+        populateJoinTable(
+                "employee_register",
                 1,
-                "addresses",
-                4,
-                psAddressBook,
+                con
+        );
+        populateJoinTable(
+                "job_position_register",
+                1,
                 con
         );
     }
 
-    private static void makeJoinTable(String tableOneName,
-                                      int overLayOne,
-                                      String tableTwoName,
-                                      int overLayTwo,
-                                      PreparedStatement ps,
-                                      Connection con) throws SQLException {
+    private static void populateJoinTable(String joinTableName,
+                                          int overlay,
+                                          Connection con) throws SQLException {
         Random random = new Random();
+        List<String> joinTablePKNames = getPKNames(joinTableName, con);
+        PreparedStatement ps = con.prepareStatement("SELECT *\n" +
+                "FROM\n" +
+                "\t`information_schema`.`KEY_COLUMN_USAGE`\n" +
+                "WHERE \n" +
+                "\tTABLE_NAME = ?\n" +
+                "    AND COLUMN_NAME = ?|?\n" +
+                "\tAND CONSTRAINT_NAME != 'PRIMARY'"
+        );
 
-        String pkOne = getPKName(tableOneName, con);
-        String pkTwo = getPKName(tableTwoName, con);
+        ps.setString(1, joinTableName);
+        ps.setString(2, joinTablePKNames.remove(0));
+        ps.setString(3, joinTablePKNames.remove(0));
+        ResultSet rs = ps.executeQuery();
+        rs.next();
+        String tableOneName = rs.getString("REFERENCED_TABLE_NAME");
+        String pkOne = rs.getString("REFERENCED_COLUMN_NAME");
+        String fkOne = rs.getString("COLUMN_NAME");
+        rs.next();
+        String tableTwoName = rs.getString("REFERENCED_TABLE_NAME");
+        String pkTwo = rs.getString("REFERENCED_COLUMN_NAME");
+        String fkTwo = rs.getString("COLUMN_NAME");
 
         List<Integer> fIdsOne = getTablePKEntries(tableOneName, con, pkOne);
         List<Integer> fIdsTwo = getTablePKEntries(tableTwoName, con, pkTwo);
-        HashMap<Integer, List<Integer>> memo = new HashMap<>();
-        for (Integer fIdTwo : fIdsTwo) {
-            memo.put(fIdTwo, null);
+
+        String updateJoinTableStatement;
+        if(fIdsOne.size() > fIdsTwo.size()){
+            List<Integer> tmp = fIdsOne;
+            fIdsOne = fIdsTwo;
+            fIdsTwo = tmp;
+            updateJoinTableStatement = String.format(
+                    "INSERT INTO `task02`.`%s` (`%s`, `%s`) VALUES(?,?)",
+                    joinTableName,
+                    fkTwo,
+                    fkOne
+                    );
+        }else {
+            updateJoinTableStatement = String.format(
+                    "INSERT INTO `task02`.`%s` (`%s`, `%s`) VALUES(?,?)",
+                    joinTableName,
+                    fkOne,
+                    fkTwo
+                    );
+        }
+        PreparedStatement psUpdateJoinTable = con.prepareStatement(updateJoinTableStatement);
+        con.setAutoCommit(false);
+
+        Map<Integer, List<Integer>> dublicateRegister = new HashMap<>();
+        for (Integer idOne : fIdsOne) {
+            dublicateRegister.put(idOne, new ArrayList<>());
         }
 
-        con.setAutoCommit(false);
         try {
-            for (int j = 0; j < overLayOne; j++) {
-                for (Integer idOne : fIdsOne) {
-                    List<Integer> fIdsTwoCopy = new ArrayList<>();
-                    for (int i = 0; i < overLayTwo; i++) {
-                        if(fIdsTwoCopy.size() == 0){
-                            fIdsTwoCopy.addAll(fIdsTwo);
-                        }
+            for (int i = 0; i < overlay; i++) {
+                LinkedList<Integer> cpfIdsOne = new LinkedList<>(fIdsOne);
+                LinkedList<Integer> cpfIdsTwo = new LinkedList<>(fIdsTwo);
+                while (!cpfIdsOne.isEmpty()) {
+                    Integer idOne = cpfIdsOne.pop();
+                    Integer idTwo = cpfIdsTwo.remove(Math.abs(random.nextInt() % cpfIdsTwo.size()));
 
-                        Integer rm;
-                        do {
-                            rm = fIdsTwoCopy.get(Math.abs(random.nextInt() % fIdsTwoCopy.size()));
-                        }while(isDuplicate(memo, idOne, rm));
-                        fIdsTwoCopy.remove(rm);
-
-                        ps.setInt(1, idOne);
-                        ps.setInt(2, rm);
-                        ps.executeUpdate();
+                    if(isDuplicate(idOne, idTwo, dublicateRegister)){
+                        continue;
                     }
-                    con.commit();
+
+                    psUpdateJoinTable.setInt(1, idOne);
+                    psUpdateJoinTable.setInt(2, idTwo);
+                    psUpdateJoinTable.executeUpdate();
                 }
+                while (!cpfIdsTwo.isEmpty()){
+                    Integer idOne = fIdsOne.get(Math.abs(random.nextInt() % fIdsOne.size()));
+                    Integer idTwo = cpfIdsTwo.remove(Math.abs(random.nextInt() % cpfIdsTwo.size()));
+
+                    if(isDuplicate(idOne, idTwo, dublicateRegister)){
+                        continue;
+                    }
+
+                    psUpdateJoinTable.setInt(1, idOne);
+                    psUpdateJoinTable.setInt(2, idTwo);
+                    psUpdateJoinTable.executeUpdate();
+                }
+                con.commit();
             }
         }catch (SQLException e){
             con.rollback();
@@ -156,21 +207,18 @@ public class DBInit {
         }
     }
 
-    private static boolean isDuplicate(HashMap<Integer, List<Integer>> memo, Integer idOne, Integer rm) {
-        for (Map.Entry<Integer, List<Integer>> entry : memo.entrySet()) {
-            if(entry.getKey().equals(rm)){
-                if(entry.getValue() == null){
-                    entry.setValue(new ArrayList<>());
-                    return false;
-                }else if(entry.getValue().contains(idOne)){
-                    return true;
-                }else{
-                    entry.getValue().add(idOne);
-                    return false;
-                }
+    private static boolean isDuplicate(Integer idOne,
+                                       Integer idTwo,
+                                       Map<Integer, List<Integer>> dublicateRegister) {
+        for (Map.Entry<Integer, List<Integer>> entry : dublicateRegister.entrySet()) {
+            if(entry.getKey().equals(idOne) && entry.getValue().contains(idTwo)){
+                return true;
+            }
+            if(entry.getKey().equals(idOne) && !entry.getValue().contains(idTwo)){
+                return false;
             }
         }
-        throw new RuntimeException("PK lost");
+        throw new RuntimeException("unknown entry");
     }
 
     private static List<Integer> getTablePKEntries(String tableName,
@@ -187,29 +235,42 @@ public class DBInit {
         return result;
     }
 
-    private static String getPKName(String tableOneName, Connection con) throws SQLException {
+    private static List<String> getPKNames(String tableOneName, Connection con) throws SQLException {
         Statement statement = con.createStatement();
         ResultSet resultSet = statement.executeQuery(
                 String.format("SHOW KEYS FROM %s WHERE Key_name = 'PRIMARY'", tableOneName)
         );
-        String pkOne;
-        if(resultSet.next()){
-            pkOne = resultSet.getString("Column_name");
-        }else{
-            throw new RuntimeException("no primary key found");
+        List<String> pkOne = new ArrayList<>();
+        while(resultSet.next()){
+            pkOne.add(resultSet.getString("Column_name"));
         }
         return pkOne;
+    }
+
+    private static void populatePositions(Connection con,
+                                          PreparedStatement psPositions,
+                                          int capacity) throws SQLException {
+        try {
+            for (int i = 1; i <= capacity; i++) {
+                RandomGenerators.PositionGen positionGen = new RandomGenerators.PositionGen();
+                psPositions.setString(1, positionGen.next().getName());
+                psPositions.executeUpdate();
+            }
+            con.commit();
+        }catch (SQLException e){
+            con.rollback();
+            throw new RuntimeException();
+        }
     }
 
     private static void populateEmployees(Connection con,
                                           PreparedStatement psEmployees,
                                           int capacity) throws SQLException {
         try {
-            for (int i = 1; i < capacity; i++) {
+            for (int i = 1; i <= capacity; i++) {
                 RandomGenerators.EmployeeGen employeeGen = new RandomGenerators.EmployeeGen();
                 psEmployees.setString(1, employeeGen.next().getFirstName());
                 psEmployees.setString(2, employeeGen.next().getLastName());
-                psEmployees.setString(3, employeeGen.next().getPosition());
                 psEmployees.executeUpdate();
             }
             con.commit();
@@ -223,7 +284,7 @@ public class DBInit {
                                                      PreparedStatement psCompanies,
                                                      int capacity) throws SQLException {
         try {
-            for (int i = 1; i < capacity; i++) {
+            for (int i = 1; i <= capacity; i++) {
                 RandomGenerators.CompanyGen companyGen = new RandomGenerators.CompanyGen();
                 psCompanies.setString(1, companyGen.next().getName());
                 psCompanies.executeUpdate();
@@ -249,7 +310,7 @@ public class DBInit {
             throw new RuntimeException("DB init error: COUNT(*) query failed");
         }
 
-        for (int cityId = 1; cityId < citiesInDB; cityId++) {
+        for (int cityId = 1; cityId <= citiesInDB; cityId++) {
             psSelectCityById.setInt(1, cityId);
             ResultSet rs = psSelectCityById.executeQuery();
             City city = new City();
@@ -291,7 +352,7 @@ public class DBInit {
             throw new RuntimeException("DB init error: COUNT(*) query failed");
         }
 
-        for (int countryId = 1; countryId < countriesInDB; countryId++) {
+        for (int countryId = 1; countryId <= countriesInDB; countryId++) {
             psSelectCountryById.setInt(1, countryId);
             ResultSet rs = psSelectCountryById.executeQuery();
             Country country = new Country();
@@ -323,7 +384,7 @@ public class DBInit {
                                           int maxCapacity) throws SQLException {
         con.setAutoCommit(false);
         try{
-            for (int i = 0; i < maxCapacity; i++) {
+            for (int i = 1; i <= maxCapacity; i++) {
                 RandomGenerators.CountryGen countryGen = new RandomGenerators.CountryGen();
                 psCountries.setString(1, countryGen.next().getCountry());
                 psCountries.executeUpdate();
