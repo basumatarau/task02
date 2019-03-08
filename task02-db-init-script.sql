@@ -77,7 +77,14 @@ CREATE TABLE IF NOT EXISTS `task02`.`employees` (
   `id_employee` INT NOT NULL AUTO_INCREMENT,
   `first_name` VARCHAR(100) NOT NULL,
 `last_name` VARCHAR(100) NOT NULL,
-PRIMARY KEY (`id_employee`))
+`fid_address` INT NOT NULL,
+PRIMARY KEY (`id_employee`, `fid_address`),
+INDEX `fk_employees_addresses1_idx` (`fid_address` ASC),
+CONSTRAINT `fk_employees_addresses`
+FOREIGN KEY (`fid_address`)
+REFERENCES `task02`.`addresses` (`id_address`)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
 
@@ -103,27 +110,6 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `task02`.`employee_register`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `task02`.`employee_register` (
-  `fid_employee` INT NOT NULL,
-  `fid_company` INT NOT NULL,
-  PRIMARY KEY (`fid_employee`, `fid_company`),
-INDEX `fk_employee_register_companies1_idx` (`fid_company` ASC),
-CONSTRAINT `fk_employee_register_companies`
-FOREIGN KEY (`fid_company`)
-REFERENCES `task02`.`companies` (`id_company`)
-  ON DELETE CASCADE
-  ON UPDATE CASCADE,
-CONSTRAINT `fk_employee_register_employees`
-FOREIGN KEY (`fid_employee`)
-REFERENCES `task02`.`employees` (`id_employee`)
-  ON DELETE CASCADE
-  ON UPDATE CASCADE)
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
 -- Table `task02`.`job_positions`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `task02`.`job_positions` (
@@ -134,19 +120,26 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `task02`.`job_position_register`
+-- Table `task02`.`employee_register`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `task02`.`job_position_register` (
+CREATE TABLE IF NOT EXISTS `task02`.`employee_register` (
   `fid_employee` INT NOT NULL,
+  `fid_company` INT NOT NULL,
   `fid_job_position` INT NOT NULL,
-  PRIMARY KEY (`fid_employee`, `fid_job_position`),
-INDEX `fk_position_register_job_positions1_idx` (`fid_job_position` ASC),
-CONSTRAINT `fk_position_register_employees`
+  PRIMARY KEY (`fid_employee`, `fid_company`, `fid_job_position`),
+INDEX `fk_employee_register_companies1_idx` (`fid_company` ASC),
+INDEX `fk_employee_register_job_positions1_idx` (`fid_job_position` ASC),
+CONSTRAINT `fk_employee_register_companies`
+FOREIGN KEY (`fid_company`)
+REFERENCES `task02`.`companies` (`id_company`)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE,
+CONSTRAINT `fk_employee_register_employees`
 FOREIGN KEY (`fid_employee`)
 REFERENCES `task02`.`employees` (`id_employee`)
   ON DELETE CASCADE
   ON UPDATE CASCADE,
-CONSTRAINT `fk_position_register_job_positions`
+CONSTRAINT `fk_employee_register_job_positions`
 FOREIGN KEY (`fid_job_position`)
 REFERENCES `task02`.`job_positions` (`id_job_position`)
   ON DELETE CASCADE

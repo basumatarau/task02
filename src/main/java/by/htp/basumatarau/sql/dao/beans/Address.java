@@ -1,18 +1,18 @@
-package by.htp.basumatarau.DAO.beans;
+package by.htp.basumatarau.sql.dao.beans;
 
 import java.util.Objects;
 
 public class Address {
     private int id;
     private String address;
-    private City city;
+    private int fidCity;
 
-    public City getCity() {
-        return city;
+    public int getFidCity() {
+        return fidCity;
     }
 
-    public void setCity(City city) {
-        this.city = city;
+    public void setFidCity(int fidCity) {
+        this.fidCity = fidCity;
     }
 
     public int getId() {
@@ -38,11 +38,11 @@ public class Address {
         Address address1 = (Address) o;
         return id == address1.id &&
                 Objects.equals(address, address1.address) &&
-                Objects.equals(city, address1.city);
+                Objects.equals(fidCity, address1.fidCity);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, address, city);
+        return Objects.hash(id, address);
     }
 }

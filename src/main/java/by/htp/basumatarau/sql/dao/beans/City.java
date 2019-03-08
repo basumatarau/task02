@@ -1,11 +1,10 @@
-package by.htp.basumatarau.DAO.beans;
+package by.htp.basumatarau.sql.dao.beans;
 
 import java.util.Objects;
 
 public class City {
     private int cityId;
     private String city;
-    private Country country;
     private int fidCountry;
 
     public int getCityId() {
@@ -24,14 +23,6 @@ public class City {
         this.city = city;
     }
 
-    public Country getCountry() {
-        return country;
-    }
-
-    public void setCountry(Country country) {
-        this.country = country;
-    }
-
     public int getFidCountry() {
         return fidCountry;
     }
@@ -47,13 +38,12 @@ public class City {
         City city1 = (City) o;
         return cityId == city1.cityId &&
                 fidCountry == city1.fidCountry &&
-                Objects.equals(city, city1.city) &&
-                Objects.equals(country, city1.country);
+                Objects.equals(city, city1.city);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(cityId, city, country, fidCountry);
+        return Objects.hash(cityId, city, fidCountry);
     }
 
 }

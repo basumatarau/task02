@@ -1,4 +1,4 @@
-package by.htp.basumatarau.DAO.beans;
+package by.htp.basumatarau.sql.dao.beans;
 
 import java.util.Objects;
 

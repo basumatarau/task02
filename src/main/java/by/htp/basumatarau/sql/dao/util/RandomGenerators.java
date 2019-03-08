@@ -1,6 +1,6 @@
-package by.htp.basumatarau.DAO.util;
+package by.htp.basumatarau.sql.dao.util;
 
-import by.htp.basumatarau.DAO.beans.*;
+import by.htp.basumatarau.sql.dao.beans.*;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;

@@ -1,4 +1,4 @@
-package by.htp.basumatarau.DAO.beans;
+package by.htp.basumatarau.sql.dao.beans;
 
 import java.util.Objects;
 
@@ -6,6 +6,15 @@ public class Employee {
     private int employeeId;
     private String firstName;
     private String lastName;
+    private int fidAddress;
+
+    public int getFidAddress() {
+        return fidAddress;
+    }
+
+    public void setFidAddress(int fidAddress) {
+        this.fidAddress = fidAddress;
+    }
 
     public int getEmployeeId() {
         return employeeId;
@@ -37,12 +46,13 @@ public class Employee {
         if (o == null || getClass() != o.getClass()) return false;
         Employee employee = (Employee) o;
         return employeeId == employee.employeeId &&
-                Objects.equals(firstName, employee.firstName) &&
-                Objects.equals(lastName, employee.lastName);
+                fidAddress == employee.fidAddress &&
+                firstName.equals(employee.firstName) &&
+                lastName.equals(employee.lastName);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(employeeId, firstName, lastName);
+        return Objects.hash(employeeId, firstName, lastName, fidAddress);
     }
 }
