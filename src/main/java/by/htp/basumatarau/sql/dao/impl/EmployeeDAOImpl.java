@@ -4,12 +4,10 @@ import by.htp.basumatarau.sql.dao.DAO;
 import by.htp.basumatarau.sql.dao.beans.*;
 import by.htp.basumatarau.sql.dao.connection.ConnectionSource;
 import by.htp.basumatarau.sql.dao.util.TupleSix;
+import by.htp.basumatarau.sql.dao.util.TupleTwo;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class EmployeeDAOImpl implements DAO<Employee, Integer> {
 
@@ -85,18 +83,99 @@ public class EmployeeDAOImpl implements DAO<Employee, Integer> {
             "\tJOIN task02.countries cns\n" +
             "\t\tON res3.fid_country=cns.id_country\n";
 
-    public Map<
-            Employee,
-            List<TupleSix<Company, City, Country, Address, Integer, Position>>
-            > getDetailed(int numEntries, int startingFrom){
-        //TODO to be implemented
+    private final static String SELECT_EMPLOYEES_DETAILED_WITH_IDS
+            ="SELECT id_employee,\n" +
+            " first_name,\n" +
+            " last_name,\n" +
+            " curr_address,\n" +
+            " id_curr_addr,\n" +
+            " curr_fid_city,\n" +
+            " company_name,\n" +
+            " id_company,\n" +
+            " city,\n" +
+            " id_city,\n" +
+            " country,\n" +
+            " id_country,\n" +
+            " address,\n" +
+            " id_address,\n" +
+            " numEmployed,\n" +
+            " position,\n" +
+            " id_job_position\n" +
+            "FROM(SELECT id_employee,\n" +
+            " first_name,\n" +
+            " last_name,\n" +
+            " curr_address,\n" +
+            " id_curr_addr,\n" +
+            " curr_fid_city,\n" +
+            " company_name,\n" +
+            " id_company,\n" +
+            " city,\n" +
+            " id_city,\n" +
+            " fid_country,\n" +
+            " address,\n" +
+            " id_address,\n" +
+            " numEmployed,\n" +
+            " position,\n" +
+            " id_job_position\n" +
+            "FROM (SELECT id_employee,\n" +
+            " first_name,\n" +
+            " last_name,\n" +
+            " curr_address,\n" +
+            " id_curr_addr,\n" +
+            " company_name,\n" +
+            " id_company,\n" +
+            " fid_city,\n" +
+            " address,\n" +
+            " id_address,\n" +
+            " numEmployed,\n" +
+            " position,\n" +
+            " id_job_position\n" +
+            "FROM (SELECT id_employee,\n" +
+            " first_name,\n" +
+            " last_name,\n" +
+            " curr_address_id,\n" +
+            " fid_company,\n" +
+            " fid_address,\n" +
+            " fid_job_position\n" +
+            "\tFROM (SELECT id_employee,\n" +
+            "\tfirst_name,\n" +
+            "\tlast_name,\n" +
+            "\tfid_address AS curr_address_id FROM task02.employees\n" +
+            "\tLIMIT ?, ?)\n" +
+            "\temp \n" +
+            "\tJOIN task02.employee_register er\n" +
+            "\t\tON emp.id_employee=er.fid_employee)\n" +
+            "        res1 \n" +
+            "\tJOIN (SELECT address AS curr_address, id_address AS id_curr_addr FROM task02.addresses) AS addr  \n" +
+            "\t\tON res1.curr_address_id=addr.id_curr_addr\n" +
+            "\tJOIN task02.job_positions pos\n" +
+            "\t\tON res1.fid_job_position=pos.id_job_position\n" +
+            "\tJOIN (SELECT `name` AS company_name, id_company FROM task02.companies) AS comp\n" +
+            "\t\tON res1.fid_company=comp.id_company\n" +
+            "\tJOIN task02.addresses addr\n" +
+            "\t\tON res1.fid_address=addr.id_address\n" +
+            "\tJOIN (SELECT fid_company, COUNT(*) as numEmployed FROM task02.employee_register GROUP BY fid_company) AS count\n" +
+            "\t\tON res1.fid_company=count.fid_company)\n" +
+            "        res2 \n" +
+            "\tJOIN task02.cities cts\n" +
+            "\t\tON res2.fid_city=cts.id_city\n" +
+            "\tJOIN (SELECT fid_city AS curr_fid_city, id_address AS _id_address FROM  task02.addresses) as dd\n" +
+            "\t\tON res2.id_curr_addr=dd._id_address)\n" +
+            "        res3 \n" +
+            "\tJOIN task02.countries cns\n" +
+            "\t\tON res3.fid_country=cns.id_country\n" +
+            "\tORDER BY id_employee";
 
-        Map<Employee,
+    public Map<TupleTwo<Employee, Address>,
+            List<TupleSix<Company, City, Country, Address, Integer, Position>>>
+                getDetailed(int numEntries, int startingFrom){
+
+        Map<TupleTwo<Employee, Address>,
                 List<TupleSix<Company, City, Country, Address, Integer, Position>>
-                > result = new HashMap<>();
+                > result = new LinkedHashMap<>();
 
         try (Connection con = ConnectionSource.yieldConnection()){
-            PreparedStatement ps = con.prepareStatement(SELECT_EMPLOYEES_DETAILED);
+            PreparedStatement ps = con.prepareStatement(SELECT_EMPLOYEES_DETAILED_WITH_IDS);
             ps.setInt(1, startingFrom);
             ps.setInt(2, numEntries);
             ResultSet resultSet = ps.executeQuery();
@@ -105,19 +184,58 @@ public class EmployeeDAOImpl implements DAO<Employee, Integer> {
                 employee.setFirstName(resultSet.getString("first_name"));
                 employee.setLastName(resultSet.getString("last_name"));
                 employee.setEmployeeId(resultSet.getInt("id_employee"));
-                employee.setFidAddress(resultSet.getInt("fid_address"));
+                employee.setFidAddress(resultSet.getInt("id_curr_addr"));
+
+                Address currentAddress = new Address();
+                currentAddress.setFidCity(resultSet.getInt("curr_fid_city"));
+                currentAddress.setAddress(resultSet.getString("curr_address"));
+                currentAddress.setId(resultSet.getInt("id_curr_addr"));
+
+                TupleTwo<Employee, Address> tt = new TupleTwo<>(employee, currentAddress);
+
+                Company company = new Company();
+                company.setName(resultSet.getString("company_name"));
+                company.setCompanyId(resultSet.getInt("id_company"));
+
+                Country country = new Country();
+                country.setCountry(resultSet.getString("country"));
+                country.setCountryId(resultSet.getInt("id_country"));
+
+                City city = new City();
+                city.setFidCountry(resultSet.getInt("id_country"));
+                city.setCity(resultSet.getString("city"));
+                city.setCityId(resultSet.getInt("id_city"));
+
+                Address address = new Address();
+                address.setId(resultSet.getInt("id_address"));
+                address.setAddress(resultSet.getString("address"));
+                address.setFidCity(resultSet.getInt("id_city"));
+
+                Integer empCount = resultSet.getInt("numEmployed");
+
+                Position position = new Position();
+                position.setId(resultSet.getInt("id_job_position"));
+                position.setName(resultSet.getString("position"));
+
+                TupleSix<Company, City, Country, Address, Integer, Position> ts
+                        = new TupleSix<>(company, city, country, address, empCount, position);
 
 
-
-
-                for (Map.Entry<Employee, List<TupleSix<Company, City, Country, Address, Integer, Position>>> entry : result.entrySet()) {
-                    if(employee.equals(entry.getKey())){
-                        if(entry.getValue()!=null){
-
-                        }else{
-                            entry.setValue(new ArrayList<>());
-                            //TODO
-                            //entry.getValue().add(new TupleSix<>());
+                if(!result.containsKey(tt)){
+                    result.put(tt, new ArrayList<>());
+                }
+                for (Map.Entry<TupleTwo<Employee, Address>,
+                        List<TupleSix<Company,
+                                City,
+                                Country,
+                                Address,
+                                Integer,
+                                Position>>>
+                        entry : result.entrySet()) {
+                    if(tt.equals(entry.getKey())){
+                        if(entry.getValue()!=null) {
+                            entry.getValue().add(ts);
+                            break;
                         }
                     }
                 }
@@ -127,7 +245,7 @@ public class EmployeeDAOImpl implements DAO<Employee, Integer> {
             //TODO dao exception to be thrown here
             e.printStackTrace();
         }
-        return null;
+        return result;
     }
 
     @Override

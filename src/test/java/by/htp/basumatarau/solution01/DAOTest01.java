@@ -3,16 +3,47 @@ package by.htp.basumatarau.solution01;
 import by.htp.basumatarau.sql.dao.DAO;
 import by.htp.basumatarau.sql.dao.DAOProvider;
 import by.htp.basumatarau.sql.dao.beans.*;
+import by.htp.basumatarau.sql.dao.impl.EmployeeDAOImpl;
+import by.htp.basumatarau.sql.dao.util.TupleSix;
+import by.htp.basumatarau.sql.dao.util.TupleTwo;
 import org.junit.Assert;
 import org.junit.Test;
 
+
 import java.util.List;
+import java.util.Map;
 
 public class DAOTest01 {
 
     @Test
     public void EmployeeQueryTest(){
+        for (Map.Entry<TupleTwo<Employee, Address>,
+                List<TupleSix<Company, City, Country, Address, Integer, Position>>>
+                entry
+                : new EmployeeDAOImpl().getDetailed(10, 10).entrySet()) {
 
+            Employee employee = entry.getKey().idOne;
+            int employeeId =employee.getEmployeeId();
+            String firstName = employee.getFirstName();
+            String lastName = employee.getLastName();
+            Address currAddress = entry.getKey().idTwo;
+            String currAddr = currAddress.getAddress();
+
+            System.out.println(employeeId + ". " + firstName + " " + lastName + " " + currAddr + ": ");
+
+            for (TupleSix<Company, City, Country, Address, Integer, Position>
+                    tupleSix : entry.getValue()) {
+                String companyName = tupleSix.company.getName();
+                String city = tupleSix.city.getCity();
+                String address = tupleSix.address.getAddress();
+                Integer personnelCount = tupleSix.personnelCount;
+                String position = tupleSix.employeePosition.getName();
+
+                System.out.print("\t\t\t\t "+companyName + " " + city + " " + address + " " + personnelCount + " " + position);
+                System.out.println();
+            }
+
+        }
     }
 
     @Test

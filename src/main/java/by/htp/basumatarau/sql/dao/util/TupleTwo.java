@@ -2,8 +2,8 @@ package by.htp.basumatarau.sql.dao.util;
 
 import java.util.Objects;
 
-public class TupleTwo<A extends Integer,
-                      B extends Integer> {
+public class TupleTwo<A,
+                      B > {
     public final A idOne;
     public final B idTwo;
 
