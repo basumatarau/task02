@@ -2,7 +2,7 @@ package by.htp.basumatarau.sql.dao.util;
 
 import by.htp.basumatarau.sql.dao.beans.*;
 
-public class Tuple <A extends Company,
+public class TupleSix <A extends Company,
                     B extends City,
                     C extends Country,
                     D extends Address,
@@ -15,12 +15,12 @@ public class Tuple <A extends Company,
     public final E personnelCount;
     public final F employeePosition;
 
-    public Tuple(A company,
-                 B city,
-                 C country,
-                 D address,
-                 E personnelCount,
-                 F employeePosition) {
+    public TupleSix(A company,
+                    B city,
+                    C country,
+                    D address,
+                    E personnelCount,
+                    F employeePosition) {
         this.company = company;
         this.city = city;
         this.country = country;

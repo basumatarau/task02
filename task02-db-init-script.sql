@@ -124,16 +124,12 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `task02`.`employee_register` (
   `fid_employee` INT NOT NULL,
-  `fid_company` INT NOT NULL,
   `fid_job_position` INT NOT NULL,
-  PRIMARY KEY (`fid_employee`, `fid_company`, `fid_job_position`),
-INDEX `fk_employee_register_companies1_idx` (`fid_company` ASC),
+  `fid_company` INT NOT NULL,
+  `fid_address` INT NOT NULL,
+  PRIMARY KEY (`fid_employee`, `fid_job_position`, `fid_company`, `fid_address`),
 INDEX `fk_employee_register_job_positions1_idx` (`fid_job_position` ASC),
-CONSTRAINT `fk_employee_register_companies`
-FOREIGN KEY (`fid_company`)
-REFERENCES `task02`.`companies` (`id_company`)
-  ON DELETE CASCADE
-  ON UPDATE CASCADE,
+INDEX `fk_employee_register_address_book1_idx` (`fid_company` ASC, `fid_address` ASC),
 CONSTRAINT `fk_employee_register_employees`
 FOREIGN KEY (`fid_employee`)
 REFERENCES `task02`.`employees` (`id_employee`)
@@ -143,6 +139,11 @@ CONSTRAINT `fk_employee_register_job_positions`
 FOREIGN KEY (`fid_job_position`)
 REFERENCES `task02`.`job_positions` (`id_job_position`)
   ON DELETE CASCADE
+  ON UPDATE CASCADE,
+CONSTRAINT `fk_employee_register_address_book`
+FOREIGN KEY (`fid_company` , `fid_address`)
+REFERENCES `task02`.`address_book` (`fid_company` , `fid_address`)
+  ON DELETE RESTRICT
   ON UPDATE CASCADE)
 ENGINE = InnoDB;
 

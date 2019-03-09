@@ -90,9 +90,9 @@ public class DBInit {
 
         populateCountries(con, psCountries, 5);
         populateCities(con, psCities, psSelectCountryById, 6);
-        populateAddresses(con, psAddresses, psSelectCityById, 20);
-        populateCompanies(con, psCompanies, 150);
-        populatePositions(con, psPosition, 300);
+        populateAddresses(con, psAddresses, psSelectCityById, 10);
+        populateCompanies(con, psCompanies, 200);
+        populatePositions(con, psPosition, 400);
         populateEmployees(con, psEmployees, 2000);
 
         populateAddressBook(
@@ -111,134 +111,98 @@ public class DBInit {
     private static void populateEmployeeRegister(String joinTableName,
                                             int overlay,
                                             Connection con) throws SQLException {
-        List<String> joinTablePKNames = getPKNames(joinTableName, con);
-        PreparedStatement psJoinTableInfoQuery = con.prepareStatement(
-                "SELECT *\n" +
-                "FROM\n" +
-                "\t`information_schema`.`KEY_COLUMN_USAGE`\n" +
-                "WHERE \n" +
-                "\tTABLE_NAME = ?\n" +
-                "    AND COLUMN_NAME = ?|?|? \n" +
-                "\tAND CONSTRAINT_NAME != 'PRIMARY'"
-        );
 
-        psJoinTableInfoQuery.setString(1, joinTableName);
-        psJoinTableInfoQuery.setString(2, joinTablePKNames.remove(0));
-        psJoinTableInfoQuery.setString(3, joinTablePKNames.remove(0));
-        psJoinTableInfoQuery.setString(4, joinTablePKNames.remove(0));
-        ResultSet rs = psJoinTableInfoQuery.executeQuery();
+        List<Integer> fIdsOne = getTablePKEntries("employees", con, "id_employee");
+        List<Integer> fIdsTwo = getTablePKEntries("job_positions", con, "id_job_position");
 
-
-        Map<String, LinkedList<String>> joinedTableData = new HashMap<>();
-        while(rs.next()){
-            LinkedList<String> data = new LinkedList<>();
-            data.push(rs.getString("COLUMN_NAME"));
-            data.push(rs.getString("REFERENCED_COLUMN_NAME"));
-            joinedTableData.put(rs.getString("REFERENCED_TABLE_NAME"), data);
-        }
-
-        List<Integer> fIdsOne = getTablePKEntries("employees", con, joinedTableData.get("employees").pop());
-        List<Integer> fIdsTwo = getTablePKEntries("job_positions", con, joinedTableData.get("job_positions").pop());
-
-
-        Map<Integer, Set<Integer>> addressBook = new HashMap<>();
+        Map<Integer, Set<TupleTwo<Integer, Integer>>> bookEntriesByAddress = new HashMap<>();
         ResultSet rSet = con.createStatement().executeQuery("SELECT * FROM task02.address_book ");
+        ArrayList<TupleTwo<Integer, Integer>> unmappedEntries = new ArrayList<>();
+
         while(rSet.next()){
             int fid_company = rSet.getInt("fid_company");
             int fid_address = rSet.getInt("fid_address");
+            unmappedEntries.add(new TupleTwo<>(fid_company, fid_address));
             boolean found = false;
-            for (Map.Entry<Integer, Set<Integer>> entry : addressBook.entrySet()) {
+            for (Map.Entry<Integer, Set<TupleTwo<Integer, Integer>>> entry : bookEntriesByAddress.entrySet()) {
                 if(entry.getKey().equals(fid_address)){
-                    entry.getValue().add(fid_company);
+                    entry.getValue().add(new TupleTwo<>(fid_company, fid_address));
                     found = true;
                     break;
                 }
             }
             if(!found){
-                HashSet<Integer> allowedCompanies = new HashSet<>();
-                allowedCompanies.add(fid_company);
-                addressBook.put(fid_address, allowedCompanies);
+                HashSet<TupleTwo<Integer, Integer>> bookEntries = new HashSet<>();
+                bookEntries.add(new TupleTwo<>(fid_company, fid_address));
+                bookEntriesByAddress.put(fid_address, bookEntries);
             }
         }
 
-        Map<Integer, Set<Integer>> allowedCompanies = new HashMap<>();
+        Map<Integer, List<TupleTwo<Integer,Integer>>> allowedEntries = new HashMap<>();
         ResultSet rSet2 = con.createStatement().executeQuery("SELECT * FROM task02.employees ");
         while(rSet2.next()){
             int id_employee = rSet2.getInt("id_employee");
             int fid_address = rSet2.getInt("fid_address");
-            for (Map.Entry<Integer, Set<Integer>> entry : addressBook.entrySet()) {
+            for (Map.Entry<Integer, Set<TupleTwo<Integer,Integer>>> entry : bookEntriesByAddress.entrySet()) {
                 if(entry.getKey().equals(fid_address)){
-                    allowedCompanies.put(id_employee, entry.getValue());
+                    allowedEntries.put(id_employee, new ArrayList<>(entry.getValue()));
                 }
             }
         }
-        joinedTableData.get("companies").pop();
-        String updateJoinTableStatement;
-        if(fIdsOne.size() > fIdsTwo.size()){
-            List<Integer> tmp = fIdsOne;
-            fIdsOne = fIdsTwo;
-            fIdsTwo = tmp;
-            updateJoinTableStatement = String.format(
-                    "INSERT INTO `task02`.`%s` (`%s`, `%s`, `%s`) VALUES(?,?,?)",
-                    joinTableName,
-                    joinedTableData.get("job_positions").pop(),
-                    joinedTableData.get("employees").pop(),
-                    joinedTableData.get("companies").pop()
-            );
-        }else {
-            updateJoinTableStatement = String.format(
-                    "INSERT INTO `task02`.`%s` (`%s`, `%s`, `%s`) VALUES(?,?,?)",
-                    joinTableName,
-                    joinedTableData.get("employees").pop(),
-                    joinedTableData.get("job_positions").pop(),
-                    joinedTableData.get("companies").pop()
-            );
-        }
+
+        String updateJoinTableStatement = String.format(
+                "INSERT INTO `task02`.`%s` (`%s`, `%s`, `%s`, `%s`) VALUES(?,?,?,?)",
+                joinTableName,
+                "fid_employee",
+                "fid_job_position",
+                "fid_company",
+                "fid_address"
+        );
 
         PreparedStatement psUpdateJoinTable = con.prepareStatement(updateJoinTableStatement);
         con.setAutoCommit(false);
 
-        Map<Integer, List<Integer>> duplicateRegister = new HashMap<>();
-        for (Integer idOne : fIdsOne) {
-            duplicateRegister.put(idOne, new ArrayList<>());
+        HashMap<Integer, List<TupleTwo<Integer, Integer>>> cpyAllowedEntriesForEmpl = new HashMap<>();
+        for (Map.Entry<Integer, List<TupleTwo<Integer, Integer>>> entry : allowedEntries.entrySet()) {
+            cpyAllowedEntriesForEmpl.put(entry.getKey(), new ArrayList<>(entry.getValue()));
         }
-
+        Map<TupleTwo<Integer, Integer>, TupleTwo<Integer, Integer>> duplicateRegister = new HashMap<>();
         try {
             for (int i = 0; i < overlay; i++) {
                 LinkedList<Integer> cpfIdsOne = new LinkedList<>(fIdsOne);
-                LinkedList<Integer> cpfIdsTwo = new LinkedList<>(fIdsTwo);
+                List<Integer> cpfIdsTwo = new ArrayList<>(fIdsTwo);
+
                 while (!cpfIdsOne.isEmpty()) {
                     Integer idOne = cpfIdsOne.pop();
-                    Integer idTwo = cpfIdsTwo.remove(Math.abs(random.nextInt() % cpfIdsTwo.size()));
-
-                    if(isDuplicate(idOne, idTwo, duplicateRegister)){
-                        continue;
+                    Integer idTwo = cpfIdsTwo.remove(Math.abs(random.nextInt()%cpfIdsTwo.size()));
+                    if(cpfIdsTwo.size() == 0){
+                        cpfIdsTwo.addAll(fIdsTwo);
                     }
 
-                    Set<Integer> allowedComIds = allowedCompanies.get(idOne);
-                    ArrayList<Integer> ids = new ArrayList<>(allowedComIds);
+                    List<TupleTwo<Integer, Integer>> tuples;
+                    if(!cpyAllowedEntriesForEmpl.isEmpty()) {
+                        tuples = cpyAllowedEntriesForEmpl.remove(idOne);
+                    }else{
+                        tuples = new ArrayList<>(unmappedEntries);
+                    }
+
+                    TupleTwo<Integer, Integer> tuple = tuples.remove(Math.abs(random.nextInt()%tuples.size()));
+                    if(tuple.equals(duplicateRegister.get(new TupleTwo<>(idOne, idTwo)))){
+                        continue;
+                    }
+                    duplicateRegister.put(new TupleTwo<>(idOne, idTwo), tuple);
+
+                    Integer idThree = tuple.idOne;
+                    Integer idFour = tuple.idTwo;
 
                     psUpdateJoinTable.setInt(1, idOne);
                     psUpdateJoinTable.setInt(2, idTwo);
-                    psUpdateJoinTable.setInt(3, ids.get(Math.abs(random.nextInt() % ids.size())));
+                    psUpdateJoinTable.setInt(3, idThree);
+                    psUpdateJoinTable.setInt(4, idFour);
                     psUpdateJoinTable.executeUpdate();
                 }
-                while (!cpfIdsTwo.isEmpty()){
-                    Integer idOne = fIdsOne.get(Math.abs(random.nextInt() % fIdsOne.size()));
-                    Integer idTwo = cpfIdsTwo.remove(Math.abs(random.nextInt() % cpfIdsTwo.size()));
+                //cpyAllowedEntriesForEmpl.clear();
 
-                    if(isDuplicate(idOne, idTwo, duplicateRegister)){
-                        continue;
-                    }
-
-                    Set<Integer> allowedComIds = allowedCompanies.get(idOne);
-                    ArrayList<Integer> ids = new ArrayList<>(allowedComIds);
-
-                    psUpdateJoinTable.setInt(1, idOne);
-                    psUpdateJoinTable.setInt(2, idTwo);
-                    psUpdateJoinTable.setInt(3, ids.get(Math.abs(random.nextInt() % ids.size())));
-                    psUpdateJoinTable.executeUpdate();
-                }
                 con.commit();
             }
         }catch (SQLException e){
@@ -251,51 +215,17 @@ public class DBInit {
     private static void populateAddressBook(String joinTableName,
                                             int overlay,
                                             Connection con) throws SQLException {
-        List<String> joinTablePKNames = getPKNames(joinTableName, con);
-        PreparedStatement psJoinTableInfoQuery = con.prepareStatement("SELECT *\n" +
-                "FROM\n" +
-                "\t`information_schema`.`KEY_COLUMN_USAGE`\n" +
-                "WHERE \n" +
-                "\tTABLE_NAME = ?\n" +
-                "    AND COLUMN_NAME = ?|?\n" +
-                "\tAND CONSTRAINT_NAME != 'PRIMARY'"
+
+        List<Integer> fIdsOne = getTablePKEntries("addresses", con, "id_address");
+        List<Integer> fIdsTwo = getTablePKEntries("companies", con, "id_company");
+
+        String updateJoinTableStatement = String.format(
+                "INSERT INTO `task02`.`%s` (`%s`, `%s`) VALUES(?,?)",
+                joinTableName,
+                "fid_address",
+                "fid_company"
         );
 
-        psJoinTableInfoQuery.setString(1, joinTableName);
-        psJoinTableInfoQuery.setString(2, joinTablePKNames.remove(0));
-        psJoinTableInfoQuery.setString(3, joinTablePKNames.remove(0));
-        ResultSet rs = psJoinTableInfoQuery.executeQuery();
-        rs.next();
-        String tableOneName = rs.getString("REFERENCED_TABLE_NAME");
-        String pkOne = rs.getString("REFERENCED_COLUMN_NAME");
-        String fkOne = rs.getString("COLUMN_NAME");
-        rs.next();
-        String tableTwoName = rs.getString("REFERENCED_TABLE_NAME");
-        String pkTwo = rs.getString("REFERENCED_COLUMN_NAME");
-        String fkTwo = rs.getString("COLUMN_NAME");
-
-        List<Integer> fIdsOne = getTablePKEntries(tableOneName, con, pkOne);
-        List<Integer> fIdsTwo = getTablePKEntries(tableTwoName, con, pkTwo);
-
-        String updateJoinTableStatement;
-        if(fIdsOne.size() > fIdsTwo.size()){
-            List<Integer> tmp = fIdsOne;
-            fIdsOne = fIdsTwo;
-            fIdsTwo = tmp;
-            updateJoinTableStatement = String.format(
-                    "INSERT INTO `task02`.`%s` (`%s`, `%s`) VALUES(?,?)",
-                    joinTableName,
-                    fkTwo,
-                    fkOne
-                    );
-        }else {
-            updateJoinTableStatement = String.format(
-                    "INSERT INTO `task02`.`%s` (`%s`, `%s`) VALUES(?,?)",
-                    joinTableName,
-                    fkOne,
-                    fkTwo
-                    );
-        }
         PreparedStatement psUpdateJoinTable = con.prepareStatement(updateJoinTableStatement);
         con.setAutoCommit(false);
 
@@ -312,17 +242,9 @@ public class DBInit {
                     Integer idOne = cpfIdsOne.pop();
                     Integer idTwo = cpfIdsTwo.remove(Math.abs(random.nextInt() % cpfIdsTwo.size()));
 
-                    if(isDuplicate(idOne, idTwo, duplicateRegister)){
-                        continue;
+                    if(cpfIdsTwo.size()==0){
+                        cpfIdsTwo.addAll(fIdsTwo);
                     }
-
-                    psUpdateJoinTable.setInt(1, idOne);
-                    psUpdateJoinTable.setInt(2, idTwo);
-                    psUpdateJoinTable.executeUpdate();
-                }
-                while (!cpfIdsTwo.isEmpty()){
-                    Integer idOne = fIdsOne.get(Math.abs(random.nextInt() % fIdsOne.size()));
-                    Integer idTwo = cpfIdsTwo.remove(Math.abs(random.nextInt() % cpfIdsTwo.size()));
 
                     if(isDuplicate(idOne, idTwo, duplicateRegister)){
                         continue;
