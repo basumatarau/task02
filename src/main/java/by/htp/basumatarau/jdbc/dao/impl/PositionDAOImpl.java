@@ -1,14 +1,17 @@
-package by.htp.basumatarau.sql.dao.impl;
+package by.htp.basumatarau.jdbc.dao.impl;
 
-import by.htp.basumatarau.sql.dao.DAO;
-import by.htp.basumatarau.sql.dao.beans.Position;
-import by.htp.basumatarau.sql.dao.connection.ConnectionSource;
+import by.htp.basumatarau.jdbc.dao.DAO;
+import by.htp.basumatarau.jdbc.dao.beans.Position;
+import by.htp.basumatarau.jdbc.dao.connection.ConnectionSource;
+import by.htp.basumatarau.jdbc.dao.exception.PersistenceException;
+import org.apache.log4j.Logger;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class PositionDAOImpl implements DAO<Position, Integer> {
+    private static final Logger log = Logger.getLogger(PositionDAOImpl.class);
 
     private final static String INSERT_NEW_POSITION_INTO_POSITIONS
             = "INSERT INTO `job_positions` (`position`) VALUES(?)";
@@ -19,7 +22,7 @@ public class PositionDAOImpl implements DAO<Position, Integer> {
     private final static String SELECT_POSITION = "SELECT * FROM `job_positions` LIMIT ?,? ";
 
     @Override
-    public boolean create(Position entity) {
+    public boolean create(Position entity) throws PersistenceException {
         boolean result = false;
         try (Connection con = ConnectionSource.yieldConnection()){
             con.setAutoCommit(false);
@@ -40,14 +43,14 @@ public class PositionDAOImpl implements DAO<Position, Integer> {
                 throw e;
             }
         } catch (SQLException e) {
-            //TODO dao exception to be thrown here
-            e.printStackTrace();
+            log.error(e.getMessage());
+            throw new PersistenceException(e);
         }
         return result;
     }
 
     @Override
-    public Position read(Integer id) {
+    public Position read(Integer id) throws PersistenceException {
         Position position = null;
         try (Connection con = ConnectionSource.yieldConnection()){
             PreparedStatement ps = con.prepareStatement(SELECT_POSITION_BY_ID, Statement.RETURN_GENERATED_KEYS);
@@ -59,15 +62,15 @@ public class PositionDAOImpl implements DAO<Position, Integer> {
                 position.setId(resultSet.getInt("id_job_position"));
             }
         } catch (SQLException e) {
-            //TODO dao exception to be thrown here
-            e.printStackTrace();
+            log.error(e.getMessage());
+            throw new PersistenceException(e);
         }
         return position;
     }
 
     @Override
-    public boolean delete(Position entity) {
-        int changedEntries = -1;
+    public boolean delete(Position entity) throws PersistenceException {
+        int changedEntries;
         try (Connection con = ConnectionSource.yieldConnection()){
             con.setAutoCommit(false);
             PreparedStatement ps = con.prepareStatement(DELETE_POSITION);
@@ -81,14 +84,14 @@ public class PositionDAOImpl implements DAO<Position, Integer> {
                 throw e;
             }
         } catch (SQLException e) {
-            //TODO dao exception to be thrown here
-            e.printStackTrace();
+            log.error(e.getMessage());
+            throw new PersistenceException(e);
         }
         return changedEntries == 1;
     }
 
     @Override
-    public List<Position> read(int numEntries, int startingFrom) {
+    public List<Position> read(int numEntries, int startingFrom) throws PersistenceException {
         List<Position> result = new ArrayList<>();
         try (Connection con = ConnectionSource.yieldConnection()){
             PreparedStatement ps = con.prepareStatement(SELECT_POSITION);
@@ -102,8 +105,8 @@ public class PositionDAOImpl implements DAO<Position, Integer> {
                 result.add(position);
             }
         } catch (SQLException e) {
-            //TODO dao exception to be thrown here
-            e.printStackTrace();
+            log.error(e.getMessage());
+            throw new PersistenceException(e);
         }
         return result;
     }

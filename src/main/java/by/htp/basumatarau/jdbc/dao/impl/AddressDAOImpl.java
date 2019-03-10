@@ -1,14 +1,17 @@
-package by.htp.basumatarau.sql.dao.impl;
+package by.htp.basumatarau.jdbc.dao.impl;
 
-import by.htp.basumatarau.sql.dao.DAO;
-import by.htp.basumatarau.sql.dao.beans.Address;
-import by.htp.basumatarau.sql.dao.connection.ConnectionSource;
+import by.htp.basumatarau.jdbc.dao.DAO;
+import by.htp.basumatarau.jdbc.dao.beans.Address;
+import by.htp.basumatarau.jdbc.dao.connection.ConnectionSource;
+import by.htp.basumatarau.jdbc.dao.exception.PersistenceException;
+import org.apache.log4j.Logger;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class AddressDAOImpl implements DAO<Address, Integer> {
+    private static final Logger log = Logger.getLogger(AddressDAOImpl.class);
     private final static String INSERT_NEW_ADDRESS_INTO_ADDRESSES
             = "INSERT INTO `addresses` (`address`, `fid_city`) VALUES(?,?)";
     private final static String SELECT_ADDRESS_BY_ID
@@ -18,7 +21,7 @@ public class AddressDAOImpl implements DAO<Address, Integer> {
     private final static String SELECT_ADDRESSES = "SELECT * FROM `addresses` LIMIT ?,? ";
 
     @Override
-    public boolean create(Address entity) {
+    public boolean create(Address entity) throws PersistenceException {
         boolean result = false;
         try (Connection con = ConnectionSource.yieldConnection()){
             con.setAutoCommit(false);
@@ -40,14 +43,14 @@ public class AddressDAOImpl implements DAO<Address, Integer> {
                 throw e;
             }
         } catch (SQLException e) {
-            //TODO dao exception to be thrown here
-            e.printStackTrace();
+            log.error(e.getMessage());
+            throw new PersistenceException(e);
         }
         return result;
     }
 
     @Override
-    public Address read(Integer id) {
+    public Address read(Integer id) throws PersistenceException {
         Address address = null;
         try (Connection con = ConnectionSource.yieldConnection()){
             PreparedStatement ps = con.prepareStatement(SELECT_ADDRESS_BY_ID,
@@ -61,14 +64,14 @@ public class AddressDAOImpl implements DAO<Address, Integer> {
                 address.setId(resultSet.getInt("id_address"));
             }
         } catch (SQLException e) {
-            //TODO dao exception to be thrown here
-            e.printStackTrace();
+            log.error(e.getMessage());
+            throw new PersistenceException(e);
         }
         return address;
     }
 
     @Override
-    public boolean delete(Address entity) {
+    public boolean delete(Address entity) throws PersistenceException {
         int changedEntries = -1;
         try (Connection con = ConnectionSource.yieldConnection()){
             con.setAutoCommit(false);
@@ -84,14 +87,14 @@ public class AddressDAOImpl implements DAO<Address, Integer> {
                 throw e;
             }
         } catch (SQLException e) {
-            //TODO dao exception to be thrown here
-            e.printStackTrace();
+            log.error(e.getMessage());
+            throw new PersistenceException(e);
         }
         return changedEntries == 1;
     }
 
     @Override
-    public List<Address> read(int numEntries, int startingFrom) {
+    public List<Address> read(int numEntries, int startingFrom) throws PersistenceException {
         List<Address> result = new ArrayList<>();
         try (Connection con = ConnectionSource.yieldConnection()){
             PreparedStatement ps = con.prepareStatement(SELECT_ADDRESSES);
@@ -106,8 +109,8 @@ public class AddressDAOImpl implements DAO<Address, Integer> {
                 result.add(address);
             }
         } catch (SQLException e) {
-            //TODO dao exception to be thrown here
-            e.printStackTrace();
+            log.error(e.getMessage());
+            throw new PersistenceException(e);
         }
         return result;
     }

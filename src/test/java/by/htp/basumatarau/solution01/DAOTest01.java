@@ -1,11 +1,12 @@
 package by.htp.basumatarau.solution01;
 
-import by.htp.basumatarau.sql.dao.DAO;
-import by.htp.basumatarau.sql.dao.DAOProvider;
-import by.htp.basumatarau.sql.dao.beans.*;
-import by.htp.basumatarau.sql.dao.impl.EmployeeDAOImpl;
-import by.htp.basumatarau.sql.dao.util.TupleSix;
-import by.htp.basumatarau.sql.dao.util.TupleTwo;
+import by.htp.basumatarau.jdbc.dao.DAO;
+import by.htp.basumatarau.jdbc.dao.DAOProvider;
+import by.htp.basumatarau.jdbc.dao.beans.*;
+import by.htp.basumatarau.jdbc.dao.exception.PersistenceException;
+import by.htp.basumatarau.jdbc.dao.impl.EmployeeDAOImpl;
+import by.htp.basumatarau.jdbc.dao.util.TupleOfSix;
+import by.htp.basumatarau.jdbc.dao.util.TupleOfTwo;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -16,38 +17,48 @@ import java.util.Map;
 public class DAOTest01 {
 
     @Test
-    public void EmployeeQueryTest(){
-        for (Map.Entry<TupleTwo<Employee, Address>,
-                List<TupleSix<Company, City, Country, Address, Integer, Position>>>
+    public void EmployeeQueryTest() throws PersistenceException {
+        for (Map.Entry<TupleOfTwo<Employee, Address>,
+                List<TupleOfSix<Company, City, Country, Address, Integer, Position>>>
                 entry
-                : new EmployeeDAOImpl().getDetailed(10, 10).entrySet()) {
+                : new EmployeeDAOImpl().getDetailed(100, 0).entrySet()) {
 
-            Employee employee = entry.getKey().idOne;
+            Employee employee = entry.getKey().one;
             int employeeId =employee.getEmployeeId();
             String firstName = employee.getFirstName();
             String lastName = employee.getLastName();
-            Address currAddress = entry.getKey().idTwo;
+            Address currAddress = entry.getKey().two;
             String currAddr = currAddress.getAddress();
 
-            System.out.println(employeeId + ". " + firstName + " " + lastName + " " + currAddr + ": ");
+            System.out.println(String.format("%3d. %s %s (%s), employed at: ",
+                    employeeId,
+                    firstName,
+                    lastName,
+                    currAddr));
 
-            for (TupleSix<Company, City, Country, Address, Integer, Position>
+            int officeNum = 1;
+            for (TupleOfSix<Company, City, Country, Address, Integer, Position>
                     tupleSix : entry.getValue()) {
                 String companyName = tupleSix.company.getName();
                 String city = tupleSix.city.getCity();
                 String address = tupleSix.address.getAddress();
                 Integer personnelCount = tupleSix.personnelCount;
                 String position = tupleSix.employeePosition.getName();
+                String country = tupleSix.country.getCountry();
 
-                System.out.print("\t\t\t\t "+companyName + " " + city + " " + address + " " + personnelCount + " " + position);
-                System.out.println();
+                System.out.print(
+                        String.format(
+                                "\toffice %d: %s; location: %s, %s, %s; staff: %s; pos.: %s\n",
+                                officeNum++, companyName, city, country, address, personnelCount, position
+                        )
+                );
             }
 
         }
     }
 
     @Test
-    public void CityDAOTest01(){
+    public void CityDAOTest01() throws PersistenceException {
         DAO<City, Integer> cityDAO = DAOProvider.getProvider().getCityDAO();
 
         List<City> cities = cityDAO.read(20, 0);
@@ -69,7 +80,7 @@ public class DAOTest01 {
     }
 
     @Test
-    public void CountryDAOTest01(){
+    public void CountryDAOTest01() throws PersistenceException {
         DAO<Country, Integer> countryDAO = DAOProvider.getProvider().getCountryDAO();
 
         List<Country> cities = countryDAO.read(3, 0);
@@ -90,7 +101,7 @@ public class DAOTest01 {
     }
 
     @Test
-    public void AddressDAOTest01(){
+    public void AddressDAOTest01() throws PersistenceException {
         DAO<Address, Integer> addressDAO = DAOProvider.getProvider().getAddressDAO();
 
         List<Address> addresses = addressDAO.read(3, 0);
@@ -112,7 +123,7 @@ public class DAOTest01 {
     }
 
     @Test
-    public void CompanyDAOTest01(){
+    public void CompanyDAOTest01() throws PersistenceException {
         DAO<Company, Integer> companyDAO = DAOProvider.getProvider().getCompanyDAO();
 
         List<Company> companies = companyDAO.read(3, 0);
@@ -133,7 +144,7 @@ public class DAOTest01 {
     }
 
     @Test
-    public void EmployeeDAOTest01(){
+    public void EmployeeDAOTest01() throws PersistenceException {
         DAO<Employee, Integer> employeeDAO = DAOProvider.getProvider().getEmployeeDAO();
 
         List<Employee> companies = employeeDAO.read(3, 0);
@@ -156,7 +167,7 @@ public class DAOTest01 {
     }
 
     @Test
-    public void PositionDAOTest01(){
+    public void PositionDAOTest01() throws PersistenceException {
         DAO<Position, Integer> positionDAO = DAOProvider.getProvider().getPositionDAO();
 
         List<Position> positions = positionDAO.read(3, 0);

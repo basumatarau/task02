@@ -1,14 +1,17 @@
-package by.htp.basumatarau.sql.dao.impl;
+package by.htp.basumatarau.jdbc.dao.impl;
 
-import by.htp.basumatarau.sql.dao.DAO;
-import by.htp.basumatarau.sql.dao.beans.City;
-import by.htp.basumatarau.sql.dao.connection.ConnectionSource;
+import by.htp.basumatarau.jdbc.dao.DAO;
+import by.htp.basumatarau.jdbc.dao.beans.City;
+import by.htp.basumatarau.jdbc.dao.connection.ConnectionSource;
+import by.htp.basumatarau.jdbc.dao.exception.PersistenceException;
+import org.apache.log4j.Logger;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class CityDAOImpl implements DAO<City, Integer> {
+    private static final Logger log = Logger.getLogger(CityDAOImpl.class);
     private final static String INSERT_NEW_CITY_INTO_CITIES
             = "INSERT INTO `cities` (`city`, `fid_country`) VALUES(?,?)";
     private final static String SELECT_CITY_BY_ID
@@ -18,7 +21,7 @@ public class CityDAOImpl implements DAO<City, Integer> {
     private final static String SELECT_CITIES = "SELECT * FROM `cities` LIMIT ?,? ";
 
     @Override
-    public boolean create(City entity) {
+    public boolean create(City entity) throws PersistenceException {
         boolean result = false;
         try (Connection con = ConnectionSource.yieldConnection()){
             con.setAutoCommit(false);
@@ -39,14 +42,14 @@ public class CityDAOImpl implements DAO<City, Integer> {
                 throw e;
             }
         } catch (SQLException e) {
-            //TODO dao exception to be thrown here
-            e.printStackTrace();
+            log.error(e.getMessage());
+            throw new PersistenceException(e);
         }
         return result;
     }
 
     @Override
-    public City read(Integer id) {
+    public City read(Integer id) throws PersistenceException {
         City city = null;
         try (Connection con = ConnectionSource.yieldConnection()){
             PreparedStatement ps = con.prepareStatement(SELECT_CITY_BY_ID, Statement.RETURN_GENERATED_KEYS);
@@ -60,15 +63,15 @@ public class CityDAOImpl implements DAO<City, Integer> {
                 city.setFidCountry(resultSet.getInt("fid_country"));
             }
         } catch (SQLException e) {
-            //TODO dao exception to be thrown here
-            e.printStackTrace();
+            log.error(e.getMessage());
+            throw new PersistenceException(e);
         }
         return city;
     }
 
     @Override
-    public boolean delete(City entity) {
-        int changedEntries = -1;
+    public boolean delete(City entity) throws PersistenceException {
+        int changedEntries;
         try (Connection con = ConnectionSource.yieldConnection()){
             con.setAutoCommit(false);
             PreparedStatement ps = con.prepareStatement(DELETE_CITY);
@@ -83,14 +86,14 @@ public class CityDAOImpl implements DAO<City, Integer> {
                 throw e;
             }
         } catch (SQLException e) {
-            //TODO dao exception to be thrown here
-            e.printStackTrace();
+            log.error(e.getMessage());
+            throw new PersistenceException(e);
         }
         return changedEntries == 1;
     }
 
     @Override
-    public List<City> read(int numEntries, int startingFrom) {
+    public List<City> read(int numEntries, int startingFrom) throws PersistenceException {
         List<City> result = new ArrayList<>();
         try (Connection con = ConnectionSource.yieldConnection()){
             PreparedStatement ps = con.prepareStatement(SELECT_CITIES);
@@ -105,8 +108,8 @@ public class CityDAOImpl implements DAO<City, Integer> {
                 result.add(city);
             }
         } catch (SQLException e) {
-            //TODO dao exception to be thrown here
-            e.printStackTrace();
+            log.error(e.getMessage());
+            throw new PersistenceException(e);
         }
         return result;
     }

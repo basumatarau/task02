@@ -1,4 +1,4 @@
-package by.htp.basumatarau.sql.dao.connection;
+package by.htp.basumatarau.jdbc.dao.connection;
 
 import org.apache.commons.dbcp2.*;
 

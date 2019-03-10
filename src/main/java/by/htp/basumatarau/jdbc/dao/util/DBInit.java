@@ -1,8 +1,8 @@
-package by.htp.basumatarau.sql.dao.util;
+package by.htp.basumatarau.jdbc.dao.util;
 
-import by.htp.basumatarau.sql.dao.beans.City;
-import by.htp.basumatarau.sql.dao.beans.Country;
-import by.htp.basumatarau.sql.dao.connection.ConnectionSource;
+import by.htp.basumatarau.jdbc.dao.beans.City;
+import by.htp.basumatarau.jdbc.dao.beans.Country;
+import by.htp.basumatarau.jdbc.dao.connection.ConnectionSource;
 import org.apache.ibatis.jdbc.ScriptRunner;
 
 import java.io.FileReader;
@@ -115,35 +115,35 @@ public class DBInit {
         List<Integer> fIdsOne = getTablePKEntries("employees", con, "id_employee");
         List<Integer> fIdsTwo = getTablePKEntries("job_positions", con, "id_job_position");
 
-        Map<Integer, Set<TupleTwo<Integer, Integer>>> bookEntriesByAddress = new HashMap<>();
+        Map<Integer, Set<TupleOfTwo<Integer, Integer>>> bookEntriesByAddress = new HashMap<>();
         ResultSet rSet = con.createStatement().executeQuery("SELECT * FROM task02.address_book ");
-        ArrayList<TupleTwo<Integer, Integer>> unmappedEntries = new ArrayList<>();
+        ArrayList<TupleOfTwo<Integer, Integer>> unmappedEntries = new ArrayList<>();
 
         while(rSet.next()){
             int fid_company = rSet.getInt("fid_company");
             int fid_address = rSet.getInt("fid_address");
-            unmappedEntries.add(new TupleTwo<>(fid_company, fid_address));
+            unmappedEntries.add(new TupleOfTwo<>(fid_company, fid_address));
             boolean found = false;
-            for (Map.Entry<Integer, Set<TupleTwo<Integer, Integer>>> entry : bookEntriesByAddress.entrySet()) {
+            for (Map.Entry<Integer, Set<TupleOfTwo<Integer, Integer>>> entry : bookEntriesByAddress.entrySet()) {
                 if(entry.getKey().equals(fid_address)){
-                    entry.getValue().add(new TupleTwo<>(fid_company, fid_address));
+                    entry.getValue().add(new TupleOfTwo<>(fid_company, fid_address));
                     found = true;
                     break;
                 }
             }
             if(!found){
-                HashSet<TupleTwo<Integer, Integer>> bookEntries = new HashSet<>();
-                bookEntries.add(new TupleTwo<>(fid_company, fid_address));
+                HashSet<TupleOfTwo<Integer, Integer>> bookEntries = new HashSet<>();
+                bookEntries.add(new TupleOfTwo<>(fid_company, fid_address));
                 bookEntriesByAddress.put(fid_address, bookEntries);
             }
         }
 
-        Map<Integer, List<TupleTwo<Integer,Integer>>> allowedEntries = new HashMap<>();
+        Map<Integer, List<TupleOfTwo<Integer,Integer>>> allowedEntries = new HashMap<>();
         ResultSet rSet2 = con.createStatement().executeQuery("SELECT * FROM task02.employees ");
         while(rSet2.next()){
             int id_employee = rSet2.getInt("id_employee");
             int fid_address = rSet2.getInt("fid_address");
-            for (Map.Entry<Integer, Set<TupleTwo<Integer,Integer>>> entry : bookEntriesByAddress.entrySet()) {
+            for (Map.Entry<Integer, Set<TupleOfTwo<Integer,Integer>>> entry : bookEntriesByAddress.entrySet()) {
                 if(entry.getKey().equals(fid_address)){
                     allowedEntries.put(id_employee, new ArrayList<>(entry.getValue()));
                 }
@@ -162,11 +162,11 @@ public class DBInit {
         PreparedStatement psUpdateJoinTable = con.prepareStatement(updateJoinTableStatement);
         con.setAutoCommit(false);
 
-        HashMap<Integer, List<TupleTwo<Integer, Integer>>> cpyAllowedEntriesForEmpl = new HashMap<>();
-        for (Map.Entry<Integer, List<TupleTwo<Integer, Integer>>> entry : allowedEntries.entrySet()) {
+        HashMap<Integer, List<TupleOfTwo<Integer, Integer>>> cpyAllowedEntriesForEmpl = new HashMap<>();
+        for (Map.Entry<Integer, List<TupleOfTwo<Integer, Integer>>> entry : allowedEntries.entrySet()) {
             cpyAllowedEntriesForEmpl.put(entry.getKey(), new ArrayList<>(entry.getValue()));
         }
-        Map<TupleTwo<Integer, Integer>, TupleTwo<Integer, Integer>> duplicateRegister = new HashMap<>();
+        Map<TupleOfTwo<Integer, Integer>, TupleOfTwo<Integer, Integer>> duplicateRegister = new HashMap<>();
         try {
             for (int i = 0; i < overlay; i++) {
                 LinkedList<Integer> cpfIdsOne = new LinkedList<>(fIdsOne);
@@ -179,21 +179,21 @@ public class DBInit {
                         cpfIdsTwo.addAll(fIdsTwo);
                     }
 
-                    List<TupleTwo<Integer, Integer>> tuples;
+                    List<TupleOfTwo<Integer, Integer>> tuples;
                     if(!cpyAllowedEntriesForEmpl.isEmpty()) {
                         tuples = cpyAllowedEntriesForEmpl.remove(idOne);
                     }else{
                         tuples = new ArrayList<>(unmappedEntries);
                     }
 
-                    TupleTwo<Integer, Integer> tuple = tuples.remove(Math.abs(random.nextInt()%tuples.size()));
-                    if(tuple.equals(duplicateRegister.get(new TupleTwo<>(idOne, idTwo)))){
+                    TupleOfTwo<Integer, Integer> tuple = tuples.remove(Math.abs(random.nextInt()%tuples.size()));
+                    if(tuple.equals(duplicateRegister.get(new TupleOfTwo<>(idOne, idTwo)))){
                         continue;
                     }
-                    duplicateRegister.put(new TupleTwo<>(idOne, idTwo), tuple);
+                    duplicateRegister.put(new TupleOfTwo<>(idOne, idTwo), tuple);
 
-                    Integer idThree = tuple.idOne;
-                    Integer idFour = tuple.idTwo;
+                    Integer idThree = tuple.one;
+                    Integer idFour = tuple.two;
 
                     psUpdateJoinTable.setInt(1, idOne);
                     psUpdateJoinTable.setInt(2, idTwo);

@@ -1,4 +1,4 @@
-package by.htp.basumatarau.sql.dao.connection;
+package by.htp.basumatarau.jdbc.dao.connection;
 
 public interface ConnectionProperties {
     String URL_CONTEXT = "jdbc:mysql://127.0.0.1:3306/task02" +

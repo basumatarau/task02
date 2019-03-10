@@ -1,15 +1,19 @@
-package by.htp.basumatarau.sql.dao.impl;
+package by.htp.basumatarau.jdbc.dao.impl;
 
-import by.htp.basumatarau.sql.dao.DAO;
-import by.htp.basumatarau.sql.dao.beans.*;
-import by.htp.basumatarau.sql.dao.connection.ConnectionSource;
-import by.htp.basumatarau.sql.dao.util.TupleSix;
-import by.htp.basumatarau.sql.dao.util.TupleTwo;
+import by.htp.basumatarau.jdbc.dao.DAO;
+import by.htp.basumatarau.jdbc.dao.beans.*;
+import by.htp.basumatarau.jdbc.dao.connection.ConnectionSource;
+import by.htp.basumatarau.jdbc.dao.exception.PersistenceException;
+import by.htp.basumatarau.jdbc.dao.util.TupleOfSix;
+import by.htp.basumatarau.jdbc.dao.util.TupleOfTwo;
+import org.apache.log4j.Logger;
 
 import java.sql.*;
 import java.util.*;
 
 public class EmployeeDAOImpl implements DAO<Employee, Integer> {
+
+    private static final Logger log = Logger.getLogger(EmployeeDAOImpl.class);
 
     private final static String INSERT_NEW_EMPLOYEE_INTO_EMPLOYEES
             = "INSERT INTO `employees` (`first_name`, `last_name`, `fid_address`) VALUES(?,?,?)";
@@ -19,7 +23,7 @@ public class EmployeeDAOImpl implements DAO<Employee, Integer> {
             = "DELETE FROM `employees` WHERE (`id_employee`, `first_name`, `last_name`, `fid_address`) VALUES(?,?,?,?)";
     private final static String SELECT_EMPLOYEES
             = "SELECT * FROM `employees` LIMIT ?,? ";
-    private final static String SELECT_EMPLOYEES_DETAILED
+    private final static String SELECT_EMPLOYEES_DETAILED_SIMPLE
             = "SELECT id_employee,\n" +
             " first_name,\n" +
             " last_name,\n" +
@@ -74,7 +78,7 @@ public class EmployeeDAOImpl implements DAO<Employee, Integer> {
             "\t\tON res1.fid_company=comp.id_company\n" +
             "\tJOIN task02.addresses addr\n" +
             "\t\tON res1.fid_address=addr.id_address\n" +
-            "\tJOIN (SELECT fid_employee, fid_address, COUNT(*) as numEmployed FROM task02.employee_register GROUP BY fid_company) AS count\n" +
+            "\tJOIN (SELECT fid_employee, fid_address, COUNT(DISTINCT fid_address) as numEmployed FROM task02.employee_register GROUP BY fid_company) AS count\n" +
             "\t\tON res1.id_employee=count.fid_employee AND res1.fid_address=count.fid_address)\n" +
             "        res2 \n" +
             "\tJOIN task02.cities cts\n" +
@@ -154,7 +158,7 @@ public class EmployeeDAOImpl implements DAO<Employee, Integer> {
             "\t\tON res1.fid_company=comp.id_company\n" +
             "\tJOIN task02.addresses addr\n" +
             "\t\tON res1.fid_address=addr.id_address\n" +
-            "\tJOIN (SELECT fid_company, COUNT(*) as numEmployed FROM task02.employee_register GROUP BY fid_company) AS count\n" +
+            "\tJOIN (SELECT fid_company, COUNT(DISTINCT fid_address) as numEmployed FROM task02.employee_register GROUP BY fid_company) AS count\n" +
             "\t\tON res1.fid_company=count.fid_company)\n" +
             "        res2 \n" +
             "\tJOIN task02.cities cts\n" +
@@ -166,13 +170,15 @@ public class EmployeeDAOImpl implements DAO<Employee, Integer> {
             "\t\tON res3.fid_country=cns.id_country\n" +
             "\tORDER BY id_employee";
 
-    public Map<TupleTwo<Employee, Address>,
-            List<TupleSix<Company, City, Country, Address, Integer, Position>>>
-                getDetailed(int numEntries, int startingFrom){
+    public Map<TupleOfTwo<Employee, Address>,
+            List<TupleOfSix<Company, City, Country, Address, Integer, Position>>>
+                getDetailed(int numEntries, int startingFrom) throws PersistenceException {
 
-        Map<TupleTwo<Employee, Address>,
-                List<TupleSix<Company, City, Country, Address, Integer, Position>>
+        Map<TupleOfTwo<Employee, Address>,
+                List<TupleOfSix<Company, City, Country, Address, Integer, Position>>
                 > result = new LinkedHashMap<>();
+
+        log.debug("detailed employee query execution");
 
         try (Connection con = ConnectionSource.yieldConnection()){
             PreparedStatement ps = con.prepareStatement(SELECT_EMPLOYEES_DETAILED_WITH_IDS);
@@ -191,7 +197,6 @@ public class EmployeeDAOImpl implements DAO<Employee, Integer> {
                 currentAddress.setAddress(resultSet.getString("curr_address"));
                 currentAddress.setId(resultSet.getInt("id_curr_addr"));
 
-                TupleTwo<Employee, Address> tt = new TupleTwo<>(employee, currentAddress);
 
                 Company company = new Company();
                 company.setName(resultSet.getString("company_name"));
@@ -217,20 +222,25 @@ public class EmployeeDAOImpl implements DAO<Employee, Integer> {
                 position.setId(resultSet.getInt("id_job_position"));
                 position.setName(resultSet.getString("position"));
 
-                TupleSix<Company, City, Country, Address, Integer, Position> ts
-                        = new TupleSix<>(company, city, country, address, empCount, position);
 
+                TupleOfTwo<Employee, Address> tt = new TupleOfTwo<>(employee, currentAddress);
+
+                TupleOfSix<Company, City, Country, Address, Integer, Position> ts
+                        = new TupleOfSix<>(company, city, country, address, empCount, position);
 
                 if(!result.containsKey(tt)){
                     result.put(tt, new ArrayList<>());
                 }
-                for (Map.Entry<TupleTwo<Employee, Address>,
-                        List<TupleSix<Company,
-                                City,
-                                Country,
-                                Address,
-                                Integer,
-                                Position>>>
+                for (Map.Entry<
+                        TupleOfTwo<Employee, Address>,
+                        List<TupleOfSix
+                                <Company,
+                                                        City,
+                                                        Country,
+                                                        Address,
+                                                        Integer,
+                                                        Position>>
+                        >
                         entry : result.entrySet()) {
                     if(tt.equals(entry.getKey())){
                         if(entry.getValue()!=null) {
@@ -242,14 +252,14 @@ public class EmployeeDAOImpl implements DAO<Employee, Integer> {
 
             }
         } catch (SQLException e) {
-            //TODO dao exception to be thrown here
-            e.printStackTrace();
+            log.error(e.getMessage());
+            throw new PersistenceException(e);
         }
         return result;
     }
 
     @Override
-    public boolean create(Employee entity) {
+    public boolean create(Employee entity) throws PersistenceException {
         boolean result = false;
         try (Connection con = ConnectionSource.yieldConnection()){
             con.setAutoCommit(false);
@@ -272,14 +282,14 @@ public class EmployeeDAOImpl implements DAO<Employee, Integer> {
                 throw e;
             }
         } catch (SQLException e) {
-            //TODO dao exception to be thrown here
-            e.printStackTrace();
+            log.error(e.getMessage());
+            throw new PersistenceException(e);
         }
         return result;
     }
 
     @Override
-    public Employee read(Integer id) {
+    public Employee read(Integer id) throws PersistenceException {
         Employee employee = null;
         try (Connection con = ConnectionSource.yieldConnection()){
             PreparedStatement ps = con.prepareStatement(SELECT_EMPLOYEE_BY_ID, Statement.RETURN_GENERATED_KEYS);
@@ -293,15 +303,15 @@ public class EmployeeDAOImpl implements DAO<Employee, Integer> {
                 employee.setEmployeeId(resultSet.getInt("id_employee"));
             }
         } catch (SQLException e) {
-            //TODO dao exception to be thrown here
-            e.printStackTrace();
+            log.error(e.getMessage());
+            throw new PersistenceException(e);
         }
         return employee;
     }
 
     @Override
-    public boolean delete(Employee entity) {
-        int changedEntries = -1;
+    public boolean delete(Employee entity) throws PersistenceException {
+        int changedEntries;
         try (Connection con = ConnectionSource.yieldConnection()){
             con.setAutoCommit(false);
             PreparedStatement ps = con.prepareStatement(DELETE_EMPLOYEE);
@@ -317,14 +327,14 @@ public class EmployeeDAOImpl implements DAO<Employee, Integer> {
                 throw e;
             }
         } catch (SQLException e) {
-            //TODO dao exception to be thrown here
-            e.printStackTrace();
+            log.error(e.getMessage());
+            throw new PersistenceException(e);
         }
         return changedEntries == 1;
     }
 
     @Override
-    public List<Employee> read(int numEntries, int startingFrom) {
+    public List<Employee> read(int numEntries, int startingFrom) throws PersistenceException {
         List<Employee> result = new ArrayList<>();
         try (Connection con = ConnectionSource.yieldConnection()){
             PreparedStatement ps = con.prepareStatement(SELECT_EMPLOYEES);
@@ -339,8 +349,8 @@ public class EmployeeDAOImpl implements DAO<Employee, Integer> {
                 result.add(employee);
             }
         } catch (SQLException e) {
-            //TODO dao exception to be thrown here
-            e.printStackTrace();
+            log.error(e.getMessage());
+            throw new PersistenceException(e);
         }
         return result;
     }

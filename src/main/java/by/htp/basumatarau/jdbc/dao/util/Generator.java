@@ -1,4 +1,4 @@
-package by.htp.basumatarau.sql.dao.util;
+package by.htp.basumatarau.jdbc.dao.util;
 
 public interface Generator<T> {
     T next();

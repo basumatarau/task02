@@ -1,6 +1,6 @@
-package by.htp.basumatarau.sql.dao.util;
+package by.htp.basumatarau.jdbc.dao.util;
 
-import by.htp.basumatarau.sql.dao.beans.*;
+import by.htp.basumatarau.jdbc.dao.beans.*;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-public class RandomGenerators {
+class RandomGenerators {
     private static final String MOCKDATA_COUNTRIES_CITIES = "mockData/countries-and-cities.json";
     private static final String MOCKDATA_COMPANIES = "mockData/companies.json";
     private static final String MOCKDATA_EMPLOYEES = "mockData/employees.json";
@@ -21,7 +21,7 @@ public class RandomGenerators {
     private static final Random rand = new Random();
 
     public static class CountryGen implements Generator<Country> {
-        private static final List<String> COUNTRIES = new ArrayList<>();
+        private final List<String> COUNTRIES = new ArrayList<>();
 
         {
             try (Reader reader = new FileReader(MOCKDATA_COUNTRIES_CITIES)) {
@@ -46,12 +46,9 @@ public class RandomGenerators {
     }
 
     public static class CityGen implements Generator<City> {
-        private Country relatedCountry;
-        private static final List<String> CITIES = new ArrayList<>();
+        private final List<String> CITIES = new ArrayList<>();
 
         public CityGen(Country relatedCountry) {
-            this.relatedCountry = relatedCountry;
-
             try (Reader reader = new FileReader(MOCKDATA_COUNTRIES_CITIES)) {
                 Map map = new Gson().fromJson(reader, Map.class);
                 for (Object o : map.entrySet()) {
@@ -91,13 +88,13 @@ public class RandomGenerators {
         @Override
         public Address next() {
             Address address = new Address();
-            address.setAddress("adr. stub#" + ++counter + " (in " + relatedCity.getCity() + ")");
+            address.setAddress("addressStub#" + ++counter + " (in " + relatedCity.getCity() + ")");
             return address;
         }
     }
 
     public static class CompanyGen implements Generator<Company> {
-        private static final List<String> COMPANY_NAMES = new ArrayList<>();
+        private final List<String> COMPANY_NAMES = new ArrayList<>();
 
         {
             try (Reader reader = new FileReader(MOCKDATA_COMPANIES)) {
@@ -121,8 +118,8 @@ public class RandomGenerators {
     }
 
     public static class EmployeeGen implements Generator<Employee> {
-        private static final List<String> EMPLOYEE_FIRST_NAMES = new ArrayList<>();
-        private static final List<String> EMPLOYEE_LAST_NAMES = new ArrayList<>();
+        private final List<String> EMPLOYEE_FIRST_NAMES = new ArrayList<>();
+        private final List<String> EMPLOYEE_LAST_NAMES = new ArrayList<>();
 
         {
             try (Reader reader = new FileReader(MOCKDATA_EMPLOYEES)) {
@@ -160,7 +157,7 @@ public class RandomGenerators {
         }
     }
     public static class PositionGen implements Generator<Position>{
-        private static final List<String> EMPLOYEE_POSITIONS = new ArrayList<>();
+        private final List<String> EMPLOYEE_POSITIONS = new ArrayList<>();
 
         {
             try (Reader reader = new FileReader(MOCKDATA_JOB_POSITIONS)) {

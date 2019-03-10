@@ -1,8 +1,8 @@
-package by.htp.basumatarau.sql.dao.util;
+package by.htp.basumatarau.jdbc.dao.util;
 
-import by.htp.basumatarau.sql.dao.beans.*;
+import by.htp.basumatarau.jdbc.dao.beans.*;
 
-public class TupleSix <A extends Company,
+public class TupleOfSix<A extends Company,
                     B extends City,
                     C extends Country,
                     D extends Address,
@@ -15,12 +15,12 @@ public class TupleSix <A extends Company,
     public final E personnelCount;
     public final F employeePosition;
 
-    public TupleSix(A company,
-                    B city,
-                    C country,
-                    D address,
-                    E personnelCount,
-                    F employeePosition) {
+    public TupleOfSix(A company,
+                      B city,
+                      C country,
+                      D address,
+                      E personnelCount,
+                      F employeePosition) {
         this.company = company;
         this.city = city;
         this.country = country;

@@ -1,7 +1,7 @@
-package by.htp.basumatarau.sql.dao;
+package by.htp.basumatarau.jdbc.dao;
 
-import by.htp.basumatarau.sql.dao.beans.*;
-import by.htp.basumatarau.sql.dao.impl.*;
+import by.htp.basumatarau.jdbc.dao.beans.*;
+import by.htp.basumatarau.jdbc.dao.impl.*;
 
 public class DAOProvider {
 
