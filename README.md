@@ -2,4 +2,4 @@
 
 **task 02 - sql db model**
 
-![](screen01.jpg)
+![](screen01.png)
