@@ -6,7 +6,12 @@
 
     <groupId>by.htp.basumatarau</groupId>
     <artifactId>task02</artifactId>
+    <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
+    <modules>
+        <module>jdbc-solution</module>
+        <module>hibernate-solution</module>
+    </modules>
 
     <name>jd2-task02</name>
     <url>http://maven.apache.org</url>

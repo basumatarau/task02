@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+
+<hibernate-mapping>
+	<class name="by.htp.basumatarau.hibernate.dao.beans.Address" table="addresses">
+
+		<meta attribute="class-description">
+			This class contains the address detail.
+		</meta>
+		<id name="addressId" type="int" column="id_address">
+			<generator class="native" />
+		</id>
+		<property name="address" column="address" type="string" />
+
+		<many-to-one name="city" cascade="all"
+					 class="by.htp.basumatarau.hibernate.dao.beans.City" column="fid_city" />
+
+		<set name="companies" table="address_book" cascade="all">
+			<key column="fid_address" not-null="true" />
+			<many-to-many column="fid_company" class="Company" unique="true"/>
+		</set>
+
+	</class>
+</hibernate-mapping>

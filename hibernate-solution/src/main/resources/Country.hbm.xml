@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+
+<hibernate-mapping>
+	<class name="by.htp.basumatarau.hibernate.dao.beans.Country" table="countries">
+
+		<meta attribute="class-description">
+			This class contains the country detail.
+		</meta>
+		<id name="countryId" type="int" column="id_country">
+			<generator class="native" />
+		</id>
+		<property name="country" column="country" type="string" />
+
+		<set name="cities" cascade="all">
+			<key column="fid_country" />
+			<one-to-many class="by.htp.basumatarau.hibernate.dao.beans.City" />
+		</set>
+
+	</class>
+</hibernate-mapping>
