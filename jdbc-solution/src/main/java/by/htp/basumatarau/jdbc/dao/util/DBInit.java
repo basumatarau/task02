@@ -30,13 +30,10 @@ public class DBInit {
             = "INSERT INTO `task02`.`job_positions` (`position`) VALUES(?)";
 
     private final static String SELECT_COUNTRY_BY_ID
-            = "SELECT * FROM task02.countries as c WHERE c.id_country = ? ";
+            = "SELECT * FROM task02.countries AS c WHERE c.id_country = ? ";
 
     private final static String SELECT_CITY_BY_ID
-            = "SELECT * FROM task02.cities as c WHERE c.id_city = ? ";
-
-    private final static String SELECT_ADDRESS_BY_ID
-            = "SELECT * FROM task02.addresses as c WHERE c.id_address = ? ";
+            = "SELECT * FROM task02.cities AS c WHERE c.id_city = ? ";
 
     private static Random random = new Random();
 
@@ -49,9 +46,9 @@ public class DBInit {
         Class.forName("com.mysql.cj.jdbc.Driver");
 
         try (Connection connection = DriverManager.getConnection("jdbc:mysql://127.0.0.1/?useSSL=false", "root",
-                "password")){
+                "password")) {
             new ScriptRunner(connection).runScript(new FileReader("task02-db-init-script.sql"));
-        }catch (IOException e){
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
@@ -95,12 +92,7 @@ public class DBInit {
         populatePositions(con, psPosition, 400);
         populateEmployees(con, psEmployees, 2000);
 
-        populateAddressBook(
-                "address_book",
-                2,
-                con
-        );
-
+        //30% of the employees table entries is taken for each overlay iteration
         populateEmployeeRegister(
                 "employee_register",
                 2,
@@ -109,46 +101,13 @@ public class DBInit {
     }
 
     private static void populateEmployeeRegister(String joinTableName,
-                                            int overlay,
-                                            Connection con) throws SQLException {
+                                                 int maxOverlay,
+                                                 Connection con) throws SQLException {
 
-        List<Integer> fIdsOne = getTablePKEntries("employees", con, "id_employee");
-        List<Integer> fIdsTwo = getTablePKEntries("job_positions", con, "id_job_position");
-
-        Map<Integer, Set<TupleOfTwo<Integer, Integer>>> bookEntriesByAddress = new HashMap<>();
-        ResultSet rSet = con.createStatement().executeQuery("SELECT * FROM task02.address_book ");
-        ArrayList<TupleOfTwo<Integer, Integer>> unmappedEntries = new ArrayList<>();
-
-        while(rSet.next()){
-            int fid_company = rSet.getInt("fid_company");
-            int fid_address = rSet.getInt("fid_address");
-            unmappedEntries.add(new TupleOfTwo<>(fid_company, fid_address));
-            boolean found = false;
-            for (Map.Entry<Integer, Set<TupleOfTwo<Integer, Integer>>> entry : bookEntriesByAddress.entrySet()) {
-                if(entry.getKey().equals(fid_address)){
-                    entry.getValue().add(new TupleOfTwo<>(fid_company, fid_address));
-                    found = true;
-                    break;
-                }
-            }
-            if(!found){
-                HashSet<TupleOfTwo<Integer, Integer>> bookEntries = new HashSet<>();
-                bookEntries.add(new TupleOfTwo<>(fid_company, fid_address));
-                bookEntriesByAddress.put(fid_address, bookEntries);
-            }
-        }
-
-        Map<Integer, List<TupleOfTwo<Integer,Integer>>> allowedEntries = new HashMap<>();
-        ResultSet rSet2 = con.createStatement().executeQuery("SELECT * FROM task02.employees ");
-        while(rSet2.next()){
-            int id_employee = rSet2.getInt("id_employee");
-            int fid_address = rSet2.getInt("fid_address");
-            for (Map.Entry<Integer, Set<TupleOfTwo<Integer,Integer>>> entry : bookEntriesByAddress.entrySet()) {
-                if(entry.getKey().equals(fid_address)){
-                    allowedEntries.put(id_employee, new ArrayList<>(entry.getValue()));
-                }
-            }
-        }
+        List<Integer> idsEmployee = getTablePKEntries("employees", con, "id_employee");
+        List<Integer> idsJobPos = getTablePKEntries("job_positions", con, "id_job_position");
+        List<Integer> idsCompany = getTablePKEntries("companies", con, "id_company");
+        List<Integer> idsAddress = getTablePKEntries("addresses", con, "id_address");
 
         String updateJoinTableStatement = String.format(
                 "INSERT INTO `task02`.`%s` (`%s`, `%s`, `%s`, `%s`) VALUES(?,?,?,?)",
@@ -162,120 +121,65 @@ public class DBInit {
         PreparedStatement psUpdateJoinTable = con.prepareStatement(updateJoinTableStatement);
         con.setAutoCommit(false);
 
-        HashMap<Integer, List<TupleOfTwo<Integer, Integer>>> cpyAllowedEntriesForEmpl = new HashMap<>();
-        for (Map.Entry<Integer, List<TupleOfTwo<Integer, Integer>>> entry : allowedEntries.entrySet()) {
-            cpyAllowedEntriesForEmpl.put(entry.getKey(), new ArrayList<>(entry.getValue()));
-        }
-        Map<TupleOfTwo<Integer, Integer>, TupleOfTwo<Integer, Integer>> duplicateRegister = new HashMap<>();
         try {
-            for (int i = 0; i < overlay; i++) {
-                LinkedList<Integer> cpfIdsOne = new LinkedList<>(fIdsOne);
-                List<Integer> cpfIdsTwo = new ArrayList<>(fIdsTwo);
+            HashSet<TupleOfFour<Integer, Integer, Integer, Integer>> duplicateRegister = new HashSet<>();
+            HashSet<TupleOfFour<Integer, Integer, Integer, Integer>> toBePermuted = new HashSet<>();
+            for (int i = 0; i < maxOverlay; i++) {
+                LinkedList<Integer> cpIdsEmployee = new LinkedList<>(idsEmployee);
+                List<Integer> cpIdsJobPos = new ArrayList<>(idsJobPos);
+                List<Integer> cpIdsCompany = new ArrayList<>(idsCompany);
+                List<Integer> cpIdsAddress = new ArrayList<>(idsAddress);
 
-                while (!cpfIdsOne.isEmpty()) {
-                    Integer idOne = cpfIdsOne.pop();
-                    Integer idTwo = cpfIdsTwo.remove(Math.abs(random.nextInt()%cpfIdsTwo.size()));
-                    if(cpfIdsTwo.size() == 0){
-                        cpfIdsTwo.addAll(fIdsTwo);
-                    }
-
-                    List<TupleOfTwo<Integer, Integer>> tuples;
-                    if(!cpyAllowedEntriesForEmpl.isEmpty()) {
-                        tuples = cpyAllowedEntriesForEmpl.remove(idOne);
-                    }else{
-                        tuples = new ArrayList<>(unmappedEntries);
-                    }
-
-                    TupleOfTwo<Integer, Integer> tuple = tuples.remove(Math.abs(random.nextInt()%tuples.size()));
-                    if(tuple.equals(duplicateRegister.get(new TupleOfTwo<>(idOne, idTwo)))){
-                        continue;
-                    }
-                    duplicateRegister.put(new TupleOfTwo<>(idOne, idTwo), tuple);
-
-                    Integer idThree = tuple.one;
-                    Integer idFour = tuple.two;
-
-                    psUpdateJoinTable.setInt(1, idOne);
-                    psUpdateJoinTable.setInt(2, idTwo);
-                    psUpdateJoinTable.setInt(3, idThree);
-                    psUpdateJoinTable.setInt(4, idFour);
-                    psUpdateJoinTable.executeUpdate();
+                for (TupleOfFour<Integer, Integer, Integer, Integer> tuple : toBePermuted) {
+                    cpIdsEmployee.add(tuple.one);
+                    cpIdsJobPos.add(tuple.two);
+                    cpIdsCompany.add(tuple.three);
+                    cpIdsAddress.add(tuple.four);
                 }
-                //cpyAllowedEntriesForEmpl.clear();
+                toBePermuted.clear();
 
-                con.commit();
-            }
-        }catch (SQLException e){
-            con.rollback();
-            throw new RuntimeException("join table population failure", e);
-        }
-    }
+                while (!cpIdsEmployee.isEmpty()) {
 
-
-    private static void populateAddressBook(String joinTableName,
-                                            int overlay,
-                                            Connection con) throws SQLException {
-
-        List<Integer> fIdsOne = getTablePKEntries("addresses", con, "id_address");
-        List<Integer> fIdsTwo = getTablePKEntries("companies", con, "id_company");
-
-        String updateJoinTableStatement = String.format(
-                "INSERT INTO `task02`.`%s` (`%s`, `%s`) VALUES(?,?)",
-                joinTableName,
-                "fid_address",
-                "fid_company"
-        );
-
-        PreparedStatement psUpdateJoinTable = con.prepareStatement(updateJoinTableStatement);
-        con.setAutoCommit(false);
-
-        Map<Integer, List<Integer>> duplicateRegister = new HashMap<>();
-        for (Integer idOne : fIdsOne) {
-            duplicateRegister.put(idOne, new ArrayList<>());
-        }
-
-        try {
-            for (int i = 0; i < overlay; i++) {
-                LinkedList<Integer> cpfIdsOne = new LinkedList<>(fIdsOne);
-                LinkedList<Integer> cpfIdsTwo = new LinkedList<>(fIdsTwo);
-                while (!cpfIdsOne.isEmpty()) {
-                    Integer idOne = cpfIdsOne.pop();
-                    Integer idTwo = cpfIdsTwo.remove(Math.abs(random.nextInt() % cpfIdsTwo.size()));
-
-                    if(cpfIdsTwo.size()==0){
-                        cpfIdsTwo.addAll(fIdsTwo);
-                    }
-
-                    if(isDuplicate(idOne, idTwo, duplicateRegister)){
+                    //30% of total registered employees have more than one place of work
+                    if (i > 0 && random.nextInt(10) < 6) {
+                        cpIdsEmployee.pop();
                         continue;
                     }
 
-                    psUpdateJoinTable.setInt(1, idOne);
-                    psUpdateJoinTable.setInt(2, idTwo);
+                    Integer fidEmployee = cpIdsEmployee.pop();
+                    Integer fidJobPos = cpIdsJobPos.remove(random.nextInt(cpIdsJobPos.size()));
+                    Integer fidCompany = cpIdsCompany.remove(random.nextInt(cpIdsCompany.size()));
+                    Integer fidAddress = cpIdsAddress.remove(random.nextInt(cpIdsAddress.size()));
+                    if (cpIdsJobPos.isEmpty()) {
+                        cpIdsJobPos.addAll(idsJobPos);
+                    }
+                    if (cpIdsCompany.isEmpty()) {
+                        cpIdsCompany.addAll(idsCompany);
+                    }
+                    if (cpIdsAddress.isEmpty()) {
+                        cpIdsAddress.addAll(idsAddress);
+                    }
+
+                    TupleOfFour<Integer, Integer, Integer, Integer> tuple
+                            = new TupleOfFour<>(fidEmployee, fidJobPos, fidCompany, fidAddress);
+                    if(duplicateRegister.contains(tuple)){
+                        toBePermuted.add(tuple);
+                        continue;
+                    }
+                    duplicateRegister.add(tuple);
+
+                    psUpdateJoinTable.setInt(1, fidEmployee);
+                    psUpdateJoinTable.setInt(2, fidJobPos);
+                    psUpdateJoinTable.setInt(3, fidCompany);
+                    psUpdateJoinTable.setInt(4, fidAddress);
                     psUpdateJoinTable.executeUpdate();
                 }
                 con.commit();
             }
-        }catch (SQLException e){
+        } catch (SQLException e) {
             con.rollback();
             throw new RuntimeException("join table population failure", e);
         }
-    }
-
-    private static boolean isDuplicate(Integer idOne,
-                                       Integer idTwo,
-                                       Map<Integer, List<Integer>> duplicateRegister) {
-        for (Map.Entry<Integer, List<Integer>> entry : duplicateRegister.entrySet()) {
-            if(entry.getKey().equals(idOne)){
-                if(entry.getValue().contains(idTwo)) {
-                    return true;
-                }else{
-                    entry.getValue().add(idTwo);
-                    return false;
-                }
-            }
-        }
-        throw new RuntimeException("unknown entry");
     }
 
     private static List<Integer> getTablePKEntries(String tableName,
@@ -286,7 +190,7 @@ public class DBInit {
                 String.format("SELECT task02.%s.%s FROM task02.%s;", tableName, PK, tableName)
         );
         ArrayList<Integer> result = new ArrayList<>();
-        while (rs.next()){
+        while (rs.next()) {
             result.add(rs.getInt(1));
         }
         return result;
@@ -298,7 +202,7 @@ public class DBInit {
                 String.format("SHOW KEYS FROM %s WHERE Key_name = 'PRIMARY'", tableOneName)
         );
         List<String> pkOne = new ArrayList<>();
-        while(resultSet.next()){
+        while (resultSet.next()) {
             pkOne.add(resultSet.getString("Column_name"));
         }
         return pkOne;
@@ -314,7 +218,7 @@ public class DBInit {
                 psPositions.executeUpdate();
             }
             con.commit();
-        }catch (SQLException e){
+        } catch (SQLException e) {
             con.rollback();
             throw new RuntimeException();
         }
@@ -330,7 +234,7 @@ public class DBInit {
         try {
             for (int i = 1; i <= capacity; i++) {
                 RandomGenerators.EmployeeGen employeeGen = new RandomGenerators.EmployeeGen();
-                if(cpyAddrPKEntries.size() == 0){
+                if (cpyAddrPKEntries.size() == 0) {
                     cpyAddrPKEntries.addAll(addrPKEntries);
                 }
                 psEmployees.setString(1, employeeGen.next().getFirstName());
@@ -339,15 +243,15 @@ public class DBInit {
                 psEmployees.executeUpdate();
             }
             con.commit();
-        }catch (SQLException e){
+        } catch (SQLException e) {
             con.rollback();
             throw new RuntimeException();
         }
     }
 
     private static void populateCompanies(Connection con,
-                                                     PreparedStatement psCompanies,
-                                                     int capacity) throws SQLException {
+                                          PreparedStatement psCompanies,
+                                          int capacity) throws SQLException {
         try {
             for (int i = 1; i <= capacity; i++) {
                 RandomGenerators.CompanyGen companyGen = new RandomGenerators.CompanyGen();
@@ -355,7 +259,7 @@ public class DBInit {
                 psCompanies.executeUpdate();
             }
             con.commit();
-        }catch (SQLException e){
+        } catch (SQLException e) {
             con.rollback();
             throw new RuntimeException();
         }
@@ -369,9 +273,9 @@ public class DBInit {
         ResultSet resultSet = statement.executeQuery("SELECT COUNT(*) FROM task02.cities;");
 
         int citiesInDB;
-        if(resultSet.next()) {
+        if (resultSet.next()) {
             citiesInDB = resultSet.getInt(1);
-        }else{
+        } else {
             throw new RuntimeException("DB init error: COUNT(*) query failed");
         }
 
@@ -380,10 +284,10 @@ public class DBInit {
             ResultSet rs = psSelectCityById.executeQuery();
             City city = new City();
 
-            if(rs.next()) {
+            if (rs.next()) {
                 city.setCity(rs.getString("city"));
                 city.setCityId(cityId);
-            }else {
+            } else {
                 throw new RuntimeException("DB population failure");
             }
 
@@ -395,7 +299,7 @@ public class DBInit {
                     psAddresses.executeUpdate();
                 }
                 con.commit();
-            }catch (SQLException e){
+            } catch (SQLException e) {
                 con.rollback();
                 throw new RuntimeException();
             }
@@ -411,9 +315,9 @@ public class DBInit {
         ResultSet resultSet = statement.executeQuery("SELECT COUNT(*) FROM task02.countries;");
 
         int countriesInDB;
-        if(resultSet.next()) {
+        if (resultSet.next()) {
             countriesInDB = resultSet.getInt(1);
-        }else{
+        } else {
             throw new RuntimeException("DB init error: COUNT(*) query failed");
         }
 
@@ -422,10 +326,10 @@ public class DBInit {
             ResultSet rs = psSelectCountryById.executeQuery();
             Country country = new Country();
 
-            if(rs.next()) {
+            if (rs.next()) {
                 country.setCountry(rs.getString("country"));
                 country.setCountryId(countryId);
-            }else {
+            } else {
                 throw new RuntimeException("DB table population failure");
             }
 
@@ -437,7 +341,7 @@ public class DBInit {
                     psCities.executeUpdate();
                 }
                 con.commit();
-            }catch (SQLException e){
+            } catch (SQLException e) {
                 con.rollback();
                 throw new RuntimeException();
             }
@@ -448,14 +352,14 @@ public class DBInit {
                                           PreparedStatement psCountries,
                                           int maxCapacity) throws SQLException {
         con.setAutoCommit(false);
-        try{
+        try {
             for (int i = 1; i <= maxCapacity; i++) {
                 RandomGenerators.CountryGen countryGen = new RandomGenerators.CountryGen();
                 psCountries.setString(1, countryGen.next().getCountry());
                 psCountries.executeUpdate();
             }
             con.commit();
-        }catch (SQLException e){
+        } catch (SQLException e) {
             con.rollback();
             throw new RuntimeException();
         }
