@@ -9,18 +9,13 @@
 		<meta attribute="class-description">
 			This class contains the address detail.
 		</meta>
-		<id name="addressId" type="int" column="id_address">
+		<id name="id" type="int" column="id_address">
 			<generator class="native" />
 		</id>
 		<property name="address" column="address" type="string" />
 
-		<many-to-one name="city" cascade="all"
+		<many-to-one name="city" cascade="all" lazy="false"
 					 class="by.htp.basumatarau.hibernate.dao.beans.City" column="fid_city" />
-
-		<set name="companies" table="address_book" cascade="all">
-			<key column="fid_address" not-null="true" />
-			<many-to-many column="fid_company" class="Company" unique="true"/>
-		</set>
 
 	</class>
 </hibernate-mapping>

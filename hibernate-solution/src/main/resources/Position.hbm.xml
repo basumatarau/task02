@@ -14,11 +14,5 @@
 		</id>
 		<property name="name" column="position" type="string" />
 
-		<list name="employees" table="employee_register" cascade="all">
-			<key column="fid_job_position" />
-			<index column="id_register_entry" />
-			<one-to-many class="by.htp.basumatarau.hibernate.dao.beans.Employee" />
-		</list>
-
 	</class>
 </hibernate-mapping>

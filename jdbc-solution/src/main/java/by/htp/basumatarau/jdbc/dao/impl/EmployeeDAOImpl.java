@@ -235,11 +235,12 @@ public class EmployeeDAOImpl implements DAO<Employee, Integer> {
                         TupleOfTwo<Employee, Address>,
                         List<TupleOfSix
                                 <Company,
-                                                        City,
-                                                        Country,
-                                                        Address,
-                                                        Integer,
-                                                        Position>>
+                                City,
+                                Country,
+                                Address,
+                                Integer,
+                                Position>
+                            >
                         >
                         entry : result.entrySet()) {
                     if(tt.equals(entry.getKey())){

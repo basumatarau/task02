@@ -9,15 +9,10 @@
 		<meta attribute="class-description">
 			This class contains the address detail.
 		</meta>
-		<id name="companyId" type="int" column="name">
+		<id name="companyId" type="int" column="id_company">
 			<generator class="native" />
 		</id>
 		<property name="name" column="name" type="string" />
-
-		<set name="addresses" table="address_book" cascade="all">
-			<key column="fid_company" not-null="true" />
-			<many-to-many column="fid_address" class="Address" unique="true"/>
-		</set>
 
 	</class>
 </hibernate-mapping>

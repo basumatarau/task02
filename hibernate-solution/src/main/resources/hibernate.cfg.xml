@@ -24,8 +24,13 @@
 		<!-- Set the current session context -->
 		<property name="current_session_context_class">thread</property>
 
-		<mapping resource="City.hbm.xml" />
 		<mapping resource="Address.hbm.xml" />
+		<mapping resource="City.hbm.xml" />
+		<mapping resource="Company.hbm.xml" />
+		<mapping resource="Country.hbm.xml" />
+		<mapping resource="Employee.hbm.xml" />
+		<mapping resource="Position.hbm.xml" />
+
 	</session-factory>
 
 </hibernate-configuration>

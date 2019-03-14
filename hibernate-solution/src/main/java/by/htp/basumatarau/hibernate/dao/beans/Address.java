@@ -1,20 +1,11 @@
 package by.htp.basumatarau.hibernate.dao.beans;
 
-import javax.persistence.*;
 import java.util.Objects;
-import java.util.Set;
 
-@Entity
-@Table(name = "addresses")
 public class Address {
-    @Id
-    @GeneratedValue
-    @Column(name="id_address")
     private int id;
-    @Column(name="address")
     private String address;
     private City city;
-    private Set<Company> companies;
 
     public City getCity() {
         return city;
@@ -22,14 +13,6 @@ public class Address {
 
     public void setCity(City city) {
         this.city = city;
-    }
-
-    public Set<Company> getCompanies() {
-        return companies;
-    }
-
-    public void setCompanies(Set<Company> companies) {
-        this.companies = companies;
     }
 
     public int getId() {

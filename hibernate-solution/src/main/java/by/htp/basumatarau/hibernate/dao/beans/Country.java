@@ -1,27 +1,11 @@
 package by.htp.basumatarau.hibernate.dao.beans;
 
-import javax.persistence.*;
 import java.util.Objects;
-import java.util.Set;
 
-@Entity
-@Table(name="countries")
 public class Country {
-    @Id
-    @GeneratedValue
-    @Column(name="id_country")
+
     private int countryId;
-    @Column(name="country")
     private String country;
-    private Set<City> cities;
-
-    public Set<City> getCities() {
-        return cities;
-    }
-
-    public void setCities(Set<City> cities) {
-        this.cities = cities;
-    }
 
     public int getCountryId() {
         return countryId;

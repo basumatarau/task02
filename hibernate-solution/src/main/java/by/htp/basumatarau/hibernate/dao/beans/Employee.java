@@ -11,6 +11,24 @@ public class Employee {
     private Address currentAddress;
 
     private List<Position> positions;
+    private List<Address> addresses;
+    private List<Company> companies;
+
+    public List<Company> getCompanies() {
+        return companies;
+    }
+
+    public void setCompanies(List<Company> companies) {
+        this.companies = companies;
+    }
+
+    public List<Address> getAddresses() {
+        return addresses;
+    }
+
+    public void setAddresses(List<Address> addresses) {
+        this.addresses = addresses;
+    }
 
     public List<Position> getPositions() {
         return positions;

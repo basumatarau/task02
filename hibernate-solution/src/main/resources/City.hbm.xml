@@ -14,13 +14,8 @@
 		</id>
 		<property name="city" column="city" type="string" />
 
-		<many-to-one name="country" cascade="all"
+		<many-to-one name="country" cascade="all" lazy="false"
 			class="by.htp.basumatarau.hibernate.dao.beans.Country" column="fid_country" />
-
-		<set name="addresses" cascade="all">
-			<key column="fid_city" />
-			<one-to-many class="by.htp.basumatarau.hibernate.dao.beans.Address" />
-		</set>
 
 	</class>
 </hibernate-mapping>

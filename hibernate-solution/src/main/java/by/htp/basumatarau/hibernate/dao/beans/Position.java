@@ -6,15 +6,6 @@ import java.util.Set;
 public class Position {
     private int id;
     private String name;
-    private Set<Employee> employees;
-
-    public Set<Employee> getEmployees() {
-        return employees;
-    }
-
-    public void setEmployees(Set<Employee> employees) {
-        this.employees = employees;
-    }
 
     public String getName() {
         return name;
