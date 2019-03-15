@@ -1,74 +1,67 @@
 package by.htp.basumtarau.solution02;
 
 import by.htp.basumatarau.hibernate.dao.beans.*;
-import by.htp.basumatarau.hibernate.dao.dto.EmployeeDetailDTO;
 import by.htp.basumatarau.hibernate.dao.exception.PersistenceException;
 import by.htp.basumatarau.hibernate.dao.impl.EmployeeDAOImpl;
+import by.htp.basumatarau.hibernate.dao.impl.RegisteredEmployeeDAOImpl;
 import org.junit.Test;
 
 import java.util.List;
 
 public class DAOTest02 {
 
-
     @Test
     public void employeeDAOTest01() throws PersistenceException {
-        List<EmployeeDetailDTO> result = new EmployeeDAOImpl().getEmployeeDTO(10, 10);
-        for (EmployeeDetailDTO employeeDetailDTO : result) {
-            System.out.println(employeeDetailDTO.getFirstName() + " " + employeeDetailDTO.getLastName() + " "
-                    + employeeDetailDTO.getCurrentAddress());
-        }
+        RegisteredEmployee empEntry = new RegisteredEmployeeDAOImpl().read(1);
+        System.out.print(empEntry.getEmployee().getFirstName() + " ");
+        System.out.print(empEntry.getEmployee().getLastName() + " ");
+        System.out.print(empEntry.getAddress().getAddress());
     }
 
     @Test
     public void employeeDAOTest02() throws PersistenceException {
-        Employee emp = new EmployeeDAOImpl().read(1);
-
-        printEmployee(emp);
+        List<RegisteredEmployee> result = new RegisteredEmployeeDAOImpl().read(10, 10);
+        for (RegisteredEmployee empEntry : result) {
+            System.out.print(empEntry.getEmployee().getFirstName() + " ");
+            System.out.print(empEntry.getEmployee().getLastName() + " ");
+            System.out.print(empEntry.getEmployee().getCurrentAddress().getAddress() + " ");
+            System.out.print(empEntry.getCompany().getName() + " ");
+            System.out.print(empEntry.getAddress().getCity().getCity() + " ");
+            System.out.print(empEntry.getAddress().getCity().getCountry().getCountry() + " ");
+            System.out.print(empEntry.getAddress().getAddress() + " ");
+            System.out.print(empEntry.getPosition().getName() + "\n");
+        }
     }
 
     @Test
     public void employeeDAOTest03() throws PersistenceException {
-        List<Employee> result
-                = new EmployeeDAOImpl().read(10, 10);
-        for (Employee employee : result) {
-            printEmployee(employee);
+        Employee empEntry = new EmployeeDAOImpl().read(1);
+        System.out.print(empEntry.getFirstName() + " ");
+        System.out.print(empEntry.getLastName() + " ");
+        System.out.print(empEntry.getCurrentAddress().getAddress() + " \n");
+        for (RegisteredEmployee regEmp : empEntry.getRegisteredEmployees()) {
+            System.out.print(regEmp.getCompany().getName() + " ");
+            System.out.print(regEmp.getAddress().getCity().getCity() + " ");
+            System.out.print(regEmp.getAddress().getCity().getCountry().getCountry() + " ");
+            System.out.print(regEmp.getAddress().getAddress() + " ");
+            System.out.print(regEmp.getPosition().getName() + "\n");
         }
     }
 
-    private void printEmployee(Employee emp) {
-        System.out.println(
-                String.format(
-                        "%3d. %s %s (%s), employed at: ",
-                        emp.getEmployeeId(),
-                        emp.getFirstName(),
-                        emp.getLastName(),
-                        emp.getCurrentAddress().getAddress()
-                )
-        );
-
-        List<Address> addresses = emp.getAddresses();
-        List<Position> positions = emp.getPositions();
-        List<Company> companies = emp.getCompanies();
-        int j = 0;
-        for (int i = 0; i < addresses.size(); i++) {
-            if(positions.get(i) == null
-                    || addresses.get(i) == null
-                    || companies.get(i) == null){
-                continue;
+    @Test
+    public void employeeDAOTest04() throws PersistenceException {
+        List<Employee> result = new EmployeeDAOImpl().read(10, 10);
+        for (Employee empEntry : result) {
+            System.out.print(empEntry.getFirstName() + " ");
+            System.out.print(empEntry.getLastName() + " ");
+            System.out.print(empEntry.getCurrentAddress().getAddress() + " \n");
+            for (RegisteredEmployee regEmp : empEntry.getRegisteredEmployees()) {
+                System.out.print(regEmp.getCompany().getName() + " ");
+                System.out.print(regEmp.getAddress().getCity().getCity() + " ");
+                System.out.print(regEmp.getAddress().getCity().getCountry().getCountry() + " ");
+                System.out.print(regEmp.getAddress().getAddress() + " ");
+                System.out.print(regEmp.getPosition().getName() + "\n");
             }
-            System.out.print(
-                    String.format(
-                            "\toffice %d: %s; location: %s, %s, %s; staff: %s; pos.: %s\n",
-                            ++j,
-                            companies.get(i).getName(),
-                            addresses.get(i).getCity().getCity(),
-                            addresses.get(i).getCity().getCountry().getCountry(),
-                            addresses.get(i).getAddress(),
-                            9999999,
-                            positions.get(i).getName()
-                    )
-            );
         }
     }
 

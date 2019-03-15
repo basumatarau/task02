@@ -30,6 +30,7 @@
 		<mapping resource="Country.hbm.xml" />
 		<mapping resource="Employee.hbm.xml" />
 		<mapping resource="Position.hbm.xml" />
+		<mapping resource="RegisteredEmployee.hbm.xml" />
 
 	</session-factory>
 

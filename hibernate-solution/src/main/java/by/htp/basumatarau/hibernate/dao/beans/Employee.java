@@ -1,7 +1,7 @@
 package by.htp.basumatarau.hibernate.dao.beans;
 
-import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 public class Employee {
     private int employeeId;
@@ -10,32 +10,14 @@ public class Employee {
     private int fidAddress;
     private Address currentAddress;
 
-    private List<Position> positions;
-    private List<Address> addresses;
-    private List<Company> companies;
+    private Set<RegisteredEmployee> registeredEmployees;
 
-    public List<Company> getCompanies() {
-        return companies;
+    public Set<RegisteredEmployee> getRegisteredEmployees() {
+        return registeredEmployees;
     }
 
-    public void setCompanies(List<Company> companies) {
-        this.companies = companies;
-    }
-
-    public List<Address> getAddresses() {
-        return addresses;
-    }
-
-    public void setAddresses(List<Address> addresses) {
-        this.addresses = addresses;
-    }
-
-    public List<Position> getPositions() {
-        return positions;
-    }
-
-    public void setPositions(List<Position> positions) {
-        this.positions = positions;
+    public void setRegisteredEmployees(Set<RegisteredEmployee> registeredEmployees) {
+        this.registeredEmployees = registeredEmployees;
     }
 
     public Address getCurrentAddress() {
@@ -45,7 +27,6 @@ public class Employee {
     public void setCurrentAddress(Address currentAddress) {
         this.currentAddress = currentAddress;
     }
-
 
     public int getFidAddress() {
         return fidAddress;

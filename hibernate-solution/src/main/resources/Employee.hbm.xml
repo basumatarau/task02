@@ -17,37 +17,15 @@
         <property name="lastName" column="last_name" type="string"/>
 
         <many-to-one name="currentAddress"
-                     cascade="all"
-                     lazy="false"
+                     column="fid_address"
                      class="by.htp.basumatarau.hibernate.dao.beans.Address"
-                     column="fid_address"/>
+                     cascade="all"
+                     lazy="false"/>
 
-        <list name="positions" table="employee_register" cascade="all">
-            <key column="fid_employee" not-null="true"/>
-            <index column="id_register_entry"/>
-            <many-to-many class="by.htp.basumatarau.hibernate.dao.beans.Position"
-                          column="fid_job_position"
-                          fetch="join"
-                          lazy="false"/>
-        </list>
-
-        <list name="addresses" table="employee_register" cascade="all">
-            <key column="fid_employee" not-null="true"/>
-            <index column="id_register_entry"/>
-            <many-to-many class="by.htp.basumatarau.hibernate.dao.beans.Address"
-                          column="fid_address"
-                          fetch="join"
-                          lazy="false"/>
-        </list>
-
-        <list name="companies" table="employee_register" cascade="all">
-            <key column="fid_employee" not-null="true"/>
-            <index column="id_register_entry"/>
-            <many-to-many class="by.htp.basumatarau.hibernate.dao.beans.Company"
-                          column="fid_company"
-                          fetch="join"
-                          lazy="false"/>
-        </list>
+        <set name="registeredEmployees" lazy="false">
+            <key column="fid_employee"/>
+            <one-to-many class="by.htp.basumatarau.hibernate.dao.beans.RegisteredEmployee" />
+        </set>
 
     </class>
 </hibernate-mapping>

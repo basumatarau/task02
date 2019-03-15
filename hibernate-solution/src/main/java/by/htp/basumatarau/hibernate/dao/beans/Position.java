@@ -1,7 +1,6 @@
 package by.htp.basumatarau.hibernate.dao.beans;
 
 import java.util.Objects;
-import java.util.Set;
 
 public class Position {
     private int id;

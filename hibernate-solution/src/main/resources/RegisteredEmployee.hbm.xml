@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+
+<hibernate-mapping>
+    <class name="by.htp.basumatarau.hibernate.dao.beans.RegisteredEmployee" table="employee_register">
+
+        <meta attribute="class-description">
+            This class contains the registered employee detail.
+        </meta>
+
+        <id name="id" type="int" column="id_register_entry">
+            <generator class="native"/>
+        </id>
+
+        <many-to-one name="employee"
+                     column="fid_employee"
+                     class="by.htp.basumatarau.hibernate.dao.beans.Employee"
+                     lazy="false"
+                     cascade="all"/>
+
+        <many-to-one name="address"
+                     column="fid_address"
+                     class="by.htp.basumatarau.hibernate.dao.beans.Address"
+                     lazy="false"
+                     cascade="all"/>
+
+        <many-to-one name="company"
+                     column="fid_company"
+                     class="by.htp.basumatarau.hibernate.dao.beans.Company"
+                     lazy="false"
+                     cascade="all"/>
+
+        <many-to-one name="position"
+                     column="fid_job_position"
+                     class="by.htp.basumatarau.hibernate.dao.beans.Position"
+                     lazy="false"
+                     cascade="all"/>
+
+    </class>
+</hibernate-mapping>
