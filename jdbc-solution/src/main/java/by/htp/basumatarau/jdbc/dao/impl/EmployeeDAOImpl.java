@@ -4,8 +4,8 @@ import by.htp.basumatarau.jdbc.dao.DAO;
 import by.htp.basumatarau.jdbc.dao.beans.*;
 import by.htp.basumatarau.jdbc.dao.connection.ConnectionSource;
 import by.htp.basumatarau.jdbc.dao.exception.PersistenceException;
+import by.htp.basumatarau.jdbc.dao.util.TupleOfFour;
 import by.htp.basumatarau.jdbc.dao.util.TupleOfSix;
-import by.htp.basumatarau.jdbc.dao.util.TupleOfTwo;
 import org.apache.log4j.Logger;
 
 import java.sql.*;
@@ -23,159 +23,95 @@ public class EmployeeDAOImpl implements DAO<Employee, Integer> {
             = "DELETE FROM `employees` WHERE (`id_employee`, `first_name`, `last_name`, `fid_address`) VALUES(?,?,?,?)";
     private final static String SELECT_EMPLOYEES
             = "SELECT * FROM `employees` LIMIT ?,? ";
-    private final static String SELECT_EMPLOYEES_DETAILED_SIMPLE
-            = "SELECT id_employee,\n" +
-            " first_name,\n" +
-            " last_name,\n" +
-            " curr_address,\n" +
-            " company_name,\n" +
-            " city,\n" +
-            " country,\n" +
-            " address,\n" +
-            " numEmployed,\n" +
-            " position  \n" +
-            "FROM(SELECT id_employee,\n" +
-            " first_name,\n" +
-            " last_name,\n" +
-            " curr_address,\n" +
-            " company_name,\n" +
-            " city,\n" +
-            " fid_country,\n" +
-            " address,\n" +
-            " numEmployed,\n" +
-            " position \n" +
-            "FROM (SELECT id_employee,\n" +
-            " first_name,\n" +
-            " last_name,\n" +
-            " curr_address,\n" +
-            " company_name,\n" +
-            " fid_city,\n" +
-            " address,\n" +
-            " numEmployed,\n" +
-            " position\n" +
-            "FROM (SELECT id_employee,\n" +
-            " first_name,\n" +
-            " last_name,\n" +
-            " curr_address_id,\n" +
-            " fid_company,\n" +
-            " fid_address,\n" +
-            " fid_job_position\n" +
-            "\tFROM (SELECT id_employee,\n" +
-            "\tfirst_name,\n" +
-            "\tlast_name,\n" +
-            "\tfid_address AS curr_address_id FROM task02.employees\n" +
-            "    ORDER BY id_employee\n" +
-            "\tLIMIT ?, ?)\n" +
-            "\temp \n" +
-            "\tJOIN task02.employee_register er\n" +
-            "\t\tON emp.id_employee=er.fid_employee)\n" +
-            "        res1 \n" +
-            "\tJOIN (SELECT address AS curr_address, id_address AS id_curr_addr FROM task02.addresses) AS addr  \n" +
-            "\t\tON res1.curr_address_id=addr.id_curr_addr\n" +
-            "\tJOIN task02.job_positions pos\n" +
-            "\t\tON res1.fid_job_position=pos.id_job_position\n" +
-            "\tJOIN (SELECT `name` AS company_name, id_company FROM task02.companies) AS comp\n" +
-            "\t\tON res1.fid_company=comp.id_company\n" +
-            "\tJOIN task02.addresses addr\n" +
-            "\t\tON res1.fid_address=addr.id_address\n" +
-            "\tJOIN (SELECT fid_employee, fid_address, COUNT(DISTINCT fid_address) as numEmployed FROM task02.employee_register GROUP BY fid_company) AS count\n" +
-            "\t\tON res1.id_employee=count.fid_employee AND res1.fid_address=count.fid_address)\n" +
-            "        res2 \n" +
-            "\tJOIN task02.cities cts\n" +
-            "\t\tON res2.fid_city=cts.id_city)\n" +
-            "        res3 \n" +
-            "\tJOIN task02.countries cns\n" +
-            "\t\tON res3.fid_country=cns.id_country\n";
-
     private final static String SELECT_EMPLOYEES_DETAILED_WITH_IDS
-            ="SELECT id_employee,\n" +
-            " first_name,\n" +
-            " last_name,\n" +
-            " curr_address,\n" +
-            " id_curr_addr,\n" +
-            " curr_fid_city,\n" +
-            " company_name,\n" +
-            " id_company,\n" +
-            " city,\n" +
-            " id_city,\n" +
-            " country,\n" +
-            " id_country,\n" +
-            " address,\n" +
-            " id_address,\n" +
-            " numEmployed,\n" +
-            " position,\n" +
-            " id_job_position\n" +
-            "FROM(SELECT id_employee,\n" +
-            " first_name,\n" +
-            " last_name,\n" +
-            " curr_address,\n" +
-            " id_curr_addr,\n" +
-            " curr_fid_city,\n" +
-            " company_name,\n" +
-            " id_company,\n" +
-            " city,\n" +
-            " id_city,\n" +
-            " fid_country,\n" +
-            " address,\n" +
-            " id_address,\n" +
-            " numEmployed,\n" +
-            " position,\n" +
-            " id_job_position\n" +
-            "FROM (SELECT id_employee,\n" +
-            " first_name,\n" +
-            " last_name,\n" +
-            " curr_address,\n" +
-            " id_curr_addr,\n" +
-            " company_name,\n" +
-            " id_company,\n" +
-            " fid_city,\n" +
-            " address,\n" +
-            " id_address,\n" +
-            " numEmployed,\n" +
-            " position,\n" +
-            " id_job_position\n" +
-            "FROM (SELECT id_employee,\n" +
-            " first_name,\n" +
-            " last_name,\n" +
-            " curr_address_id,\n" +
-            " fid_company,\n" +
-            " fid_address,\n" +
-            " fid_job_position\n" +
-            "\tFROM (SELECT id_employee,\n" +
-            "\tfirst_name,\n" +
-            "\tlast_name,\n" +
-            "\tfid_address AS curr_address_id FROM task02.employees\n" +
-            "\tLIMIT ?, ?)\n" +
-            "\temp \n" +
-            "\tJOIN task02.employee_register er\n" +
-            "\t\tON emp.id_employee=er.fid_employee)\n" +
-            "        res1 \n" +
-            "\tJOIN (SELECT address AS curr_address, id_address AS id_curr_addr FROM task02.addresses) AS addr  \n" +
-            "\t\tON res1.curr_address_id=addr.id_curr_addr\n" +
-            "\tJOIN task02.job_positions pos\n" +
-            "\t\tON res1.fid_job_position=pos.id_job_position\n" +
-            "\tJOIN (SELECT `name` AS company_name, id_company FROM task02.companies) AS comp\n" +
-            "\t\tON res1.fid_company=comp.id_company\n" +
-            "\tJOIN task02.addresses addr\n" +
-            "\t\tON res1.fid_address=addr.id_address\n" +
-            "\tJOIN (SELECT fid_company, COUNT(DISTINCT fid_address) as numEmployed FROM task02.employee_register GROUP BY fid_company) AS count\n" +
-            "\t\tON res1.fid_company=count.fid_company)\n" +
-            "        res2 \n" +
-            "\tJOIN task02.cities cts\n" +
-            "\t\tON res2.fid_city=cts.id_city\n" +
-            "\tJOIN (SELECT fid_city AS curr_fid_city, id_address AS _id_address FROM  task02.addresses) as dd\n" +
-            "\t\tON res2.id_curr_addr=dd._id_address)\n" +
-            "        res3 \n" +
-            "\tJOIN task02.countries cns\n" +
-            "\t\tON res3.fid_country=cns.id_country\n" +
-            "\tORDER BY id_employee";
+            = "SELECT \n" +
+            "id_employee,\n" +
+            "first_name,\n" +
+            "last_name,\n" +
+            "id_address,\n" +
+            "address, \n" +
+            "id_city,\n" +
+            "city, \n" +
+            "id_country,\n" +
+            "country,\n" +
+            "id_company,\n" +
+            "company_name,\n" +
+            "id_officeAddress,\n" +
+            "officeAddress,\n" +
+            "id_officeCity,\n" +
+            "officeCity,\n" +
+            "id_officeCountry,\n" +
+            "officeCountry,\n" +
+            "officeStaff,\n" +
+            "job_position\n" +
+            "FROM (SELECT *\n" +
+            "\tFROM employees\n" +
+            "\tJOIN addresses \n" +
+            "\t\tON employees.fid_address = addresses.id_address\n" +
+            "\tJOIN cities \n" +
+            "\t\tON addresses.fid_city = cities.id_city\n" +
+            "\tJOIN countries \n" +
+            "\t\tON cities.fid_country = countries.id_country\n" +
+            "\tORDER BY employees.id_employee\n" +
+            "\tLIMIT ?,?) \n" +
+            "\tAS interim \n" +
+            "\t\tJOIN (SELECT fid_address AS fid_officeAddress, fid_company, job_position, fid_employee FROM employee_register) AS reg\n" +
+            "\t\t\tON interim.id_employee = reg.fid_employee\n" +
+            "\t\tJOIN (SELECT address AS officeAddress, id_address as id_officeAddress, fid_city as fid_officeCity FROM addresses) AS officeAddress\n" +
+            "\t\t\tON officeAddress.id_officeAddress = reg.fid_officeAddress\n" +
+            "\t\tJOIN (SELECT city AS officeCity, id_city as id_officeCity, fid_country as fid_officeCountry FROM cities) AS cty\n" +
+            "\t\t\tON officeAddress.fid_officeCity = cty.id_officeCity\n" +
+            "\t\tJOIN (SELECT country AS officeCountry, id_country AS id_officeCountry FROM countries) AS cntry\n" +
+            "\t\t\tON cty.fid_officeCountry = cntry.id_officeCountry\n" +
+            "\t\tJOIN (SELECT name AS company_name, id_company FROM companies) AS cmp\n" +
+            "\t\t\tON cmp.id_company = reg.fid_company\n" +
+            "\t\tJOIN (SELECT fid_company, COUNT(DISTINCT fid_address) as officeStaff FROM employee_register GROUP BY fid_company) countSheet\n" +
+            "\t\t\tON countSheet.fid_company = reg.fid_company ";
 
-    public Map<TupleOfTwo<Employee, Address>,
-            List<TupleOfSix<Company, City, Country, Address, Integer, Position>>>
+    private final static String SELECT_EMPLOYEES_DETAILED_SIMPLE
+            ="SELECT \n" +
+            "id_employee,\n" +
+            "first_name,\n" +
+            "last_name,\n" +
+            "address, \n" +
+            "city, \n" +
+            "country,\n" +
+            "company_name,\n" +
+            "officeAddress,\n" +
+            "officeCity,\n" +
+            "officeCountry,\n" +
+            "officeStaff,\n" +
+            "job_position\n" +
+            "FROM (SELECT *\n" +
+            "\tFROM employees\n" +
+            "\tJOIN addresses \n" +
+            "\t\tON employees.fid_address = addresses.id_address\n" +
+            "\tJOIN cities \n" +
+            "\t\tON addresses.fid_city = cities.id_city\n" +
+            "\tJOIN countries \n" +
+            "\t\tON cities.fid_country = countries.id_country\n" +
+            "\tORDER BY employees.id_employee\n" +
+            "\tLIMIT ?,?) \n" +
+            "\tAS interim \n" +
+            "\t\tJOIN (SELECT fid_address AS fid_officeAddress, fid_company, job_position, fid_employee FROM employee_register) AS reg\n" +
+            "\t\t\tON interim.id_employee = reg.fid_employee\n" +
+            "\t\tJOIN (SELECT address AS officeAddress, id_address as id_officeAddress, fid_city as fid_officeCity FROM addresses) AS officeAddress\n" +
+            "\t\t\tON officeAddress.id_officeAddress = reg.fid_officeAddress\n" +
+            "\t\tJOIN (SELECT city AS officeCity, id_city as id_officeCity, fid_country as fid_officeCountry FROM cities) AS cty\n" +
+            "\t\t\tON officeAddress.fid_officeCity = cty.id_officeCity\n" +
+            "\t\tJOIN (SELECT country AS officeCountry, id_country AS id_officeCountry FROM countries) AS cntry\n" +
+            "\t\t\tON cty.fid_officeCountry = cntry.id_officeCountry\n" +
+            "\t\tJOIN (SELECT name AS company_name, id_company FROM companies) AS cmp\n" +
+            "\t\t\tON cmp.id_company = reg.fid_company\n" +
+            "\t\tJOIN (SELECT fid_company, COUNT(DISTINCT fid_address) as officeStaff FROM employee_register GROUP BY fid_company) countSheet\n" +
+            "\t\t\tON countSheet.fid_company = reg.fid_company";
+
+    public Map<TupleOfFour<Employee, Address, City, Country>,
+            List<TupleOfSix<Company, City, Country, Address, Integer, RegisteredEmployee>>>
                 getDetailed(int numEntries, int startingFrom) throws PersistenceException {
 
-        Map<TupleOfTwo<Employee, Address>,
-                List<TupleOfSix<Company, City, Country, Address, Integer, Position>>
+        Map<TupleOfFour<Employee, Address, City, Country>,
+                List<TupleOfSix<Company, City, Country, Address, Integer, RegisteredEmployee>>
                 > result = new LinkedHashMap<>();
 
         log.debug("detailed employee query execution");
@@ -190,58 +126,60 @@ public class EmployeeDAOImpl implements DAO<Employee, Integer> {
                 employee.setFirstName(resultSet.getString("first_name"));
                 employee.setLastName(resultSet.getString("last_name"));
                 employee.setEmployeeId(resultSet.getInt("id_employee"));
-                employee.setFidAddress(resultSet.getInt("id_curr_addr"));
+                employee.setFidAddress(resultSet.getInt("id_address"));
 
                 Address currentAddress = new Address();
-                currentAddress.setFidCity(resultSet.getInt("curr_fid_city"));
-                currentAddress.setAddress(resultSet.getString("curr_address"));
-                currentAddress.setId(resultSet.getInt("id_curr_addr"));
-
-
-                Company company = new Company();
-                company.setName(resultSet.getString("company_name"));
-                company.setCompanyId(resultSet.getInt("id_company"));
-
-                Country country = new Country();
-                country.setCountry(resultSet.getString("country"));
-                country.setCountryId(resultSet.getInt("id_country"));
+                currentAddress.setFidCity(resultSet.getInt("id_city"));
+                currentAddress.setAddress(resultSet.getString("address"));
+                currentAddress.setId(resultSet.getInt("id_address"));
 
                 City city = new City();
                 city.setFidCountry(resultSet.getInt("id_country"));
                 city.setCity(resultSet.getString("city"));
                 city.setCityId(resultSet.getInt("id_city"));
 
+                Country country = new Country();
+                country.setCountry(resultSet.getString("country"));
+                country.setCountryId(resultSet.getInt("id_country"));
+
+                Company company = new Company();
+                company.setName(resultSet.getString("company_name"));
+                company.setCompanyId(resultSet.getInt("id_company"));
+
                 Address address = new Address();
                 address.setId(resultSet.getInt("id_address"));
                 address.setAddress(resultSet.getString("address"));
                 address.setFidCity(resultSet.getInt("id_city"));
 
-                Integer empCount = resultSet.getInt("numEmployed");
+                City officeCity = new City();
+                officeCity.setFidCountry(resultSet.getInt("id_officeCountry"));
+                officeCity.setCity(resultSet.getString("officeCity"));
+                officeCity.setCityId(resultSet.getInt("id_officeCity"));
 
-                Position position = new Position();
-                position.setId(resultSet.getInt("id_job_position"));
-                position.setName(resultSet.getString("position"));
+                Country officeCountry = new Country();
+                officeCountry.setCountry(resultSet.getString("officeCountry"));
+                officeCountry.setCountryId(resultSet.getInt("id_officeCountry"));
 
+                Integer empCount = resultSet.getInt("officeStaff");
 
-                TupleOfTwo<Employee, Address> tt = new TupleOfTwo<>(employee, currentAddress);
+                RegisteredEmployee regEmp = new RegisteredEmployee();
+                regEmp.setJobPosition(resultSet.getString("job_position"));
+                regEmp.setFidAddress(resultSet.getInt("id_address"));
+                regEmp.setFidCompany(resultSet.getInt("id_company"));
+                regEmp.setFidEmployee(resultSet.getInt("id_employee"));
 
-                TupleOfSix<Company, City, Country, Address, Integer, Position> ts
-                        = new TupleOfSix<>(company, city, country, address, empCount, position);
+                TupleOfFour<Employee, Address, City, Country> tt
+                        = new TupleOfFour<>(employee, currentAddress, city, country);
+
+                TupleOfSix<Company, City, Country, Address, Integer, RegisteredEmployee> ts
+                        = new TupleOfSix<>(company, officeCity, officeCountry, address, empCount, regEmp);
 
                 if(!result.containsKey(tt)){
                     result.put(tt, new ArrayList<>());
                 }
-                for (Map.Entry<
-                        TupleOfTwo<Employee, Address>,
-                        List<TupleOfSix
-                                <Company,
-                                City,
-                                Country,
-                                Address,
-                                Integer,
-                                Position>
-                            >
-                        >
+                for (Map.Entry<TupleOfFour<Employee, Address, City, Country>,
+                        List<TupleOfSix<Company, City, Country,
+                                Address, Integer, RegisteredEmployee>>>
                         entry : result.entrySet()) {
                     if(tt.equals(entry.getKey())){
                         if(entry.getValue()!=null) {

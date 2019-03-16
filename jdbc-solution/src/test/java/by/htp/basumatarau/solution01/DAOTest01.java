@@ -5,8 +5,8 @@ import by.htp.basumatarau.jdbc.dao.DAOProvider;
 import by.htp.basumatarau.jdbc.dao.beans.*;
 import by.htp.basumatarau.jdbc.dao.exception.PersistenceException;
 import by.htp.basumatarau.jdbc.dao.impl.EmployeeDAOImpl;
+import by.htp.basumatarau.jdbc.dao.util.TupleOfFour;
 import by.htp.basumatarau.jdbc.dao.util.TupleOfSix;
-import by.htp.basumatarau.jdbc.dao.util.TupleOfTwo;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -18,8 +18,8 @@ public class DAOTest01 {
 
     @Test
     public void EmployeeQueryTest() throws PersistenceException {
-        for (Map.Entry<TupleOfTwo<Employee, Address>,
-                List<TupleOfSix<Company, City, Country, Address, Integer, Position>>>
+        for (Map.Entry<TupleOfFour<Employee, Address, City, Country>,
+                List<TupleOfSix<Company, City, Country, Address, Integer, RegisteredEmployee>>>
                 entry
                 : new EmployeeDAOImpl().getDetailed(100, 0).entrySet()) {
 
@@ -37,13 +37,13 @@ public class DAOTest01 {
                     currAddr));
 
             int officeNum = 1;
-            for (TupleOfSix<Company, City, Country, Address, Integer, Position>
+            for (TupleOfSix<Company, City, Country, Address, Integer, RegisteredEmployee>
                     tupleSix : entry.getValue()) {
                 String companyName = tupleSix.company.getName();
                 String city = tupleSix.city.getCity();
                 String address = tupleSix.address.getAddress();
                 Integer personnelCount = tupleSix.personnelCount;
-                String position = tupleSix.employeePosition.getName();
+                String position = tupleSix.regEmployee.getJobPosition();
                 String country = tupleSix.country.getCountry();
 
                 System.out.print(
@@ -166,24 +166,4 @@ public class DAOTest01 {
         System.out.println(employeeDAO.read(newEmployee.getEmployeeId()).getFirstName());
     }
 
-    @Test
-    public void PositionDAOTest01() throws PersistenceException {
-        DAO<Position, Integer> positionDAO = DAOProvider.getProvider().getPositionDAO();
-
-        List<Position> positions = positionDAO.read(3, 0);
-        Assert.assertEquals(3, positions.size());
-        for (Position em : positions) {
-            System.out.println(em.getName());
-        }
-
-        Position employee = positionDAO.read(1);
-        Assert.assertNotEquals(null, employee);
-        System.out.println(employee.getName());
-
-        Position newPosition = new Position();
-        newPosition.setName("newPosition");
-        positionDAO.create(newPosition);
-
-        System.out.println(positionDAO.read(newPosition.getId()).getName());
-    }
 }

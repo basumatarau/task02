@@ -95,40 +95,18 @@ DEFAULT CHARACTER SET = utf8;
 
 
 -- -----------------------------------------------------
--- Table `task02`.`job_positions`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `task02`.`job_positions` (
-  `id_job_position` INT(11) NOT NULL AUTO_INCREMENT,
-`position` VARCHAR(100) NOT NULL,
-PRIMARY KEY (`id_job_position`))
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
-
-
--- -----------------------------------------------------
 -- Table `task02`.`employee_register`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `task02`.`employee_register` (
   `id_register_entry` INT(11) NOT NULL AUTO_INCREMENT,
 `fid_employee` INT(11) NOT NULL,
-`fid_job_position` INT(11) NOT NULL,
 `fid_address` INT(11) NOT NULL,
 `fid_company` INT(11) NOT NULL,
-PRIMARY KEY (`id_register_entry`, `fid_employee`, `fid_job_position`, `fid_address`, `fid_company`),
-INDEX `fk_employee_register_job_positions1_idx` (`fid_job_position` ASC),
+`job_position` VARCHAR(100) NOT NULL,
+PRIMARY KEY (`id_register_entry`, `fid_employee`, `fid_address`, `fid_company`, `job_position`),
 INDEX `fk_employee_register_employees` (`fid_employee` ASC),
 INDEX `fk_employee_register_addresses1_idx` (`fid_address` ASC),
 INDEX `fk_employee_register_companies1_idx` (`fid_company` ASC),
-CONSTRAINT `fk_employee_register_employees`
-FOREIGN KEY (`fid_employee`)
-REFERENCES `task02`.`employees` (`id_employee`)
-  ON DELETE CASCADE
-  ON UPDATE CASCADE,
-CONSTRAINT `fk_employee_register_job_positions`
-FOREIGN KEY (`fid_job_position`)
-REFERENCES `task02`.`job_positions` (`id_job_position`)
-  ON DELETE CASCADE
-  ON UPDATE CASCADE,
 CONSTRAINT `fk_employee_register_addresses`
 FOREIGN KEY (`fid_address`)
 REFERENCES `task02`.`addresses` (`id_address`)
@@ -137,6 +115,11 @@ REFERENCES `task02`.`addresses` (`id_address`)
 CONSTRAINT `fk_employee_register_companies`
 FOREIGN KEY (`fid_company`)
 REFERENCES `task02`.`companies` (`id_company`)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE,
+CONSTRAINT `fk_employee_register_employees`
+FOREIGN KEY (`fid_employee`)
+REFERENCES `task02`.`employees` (`id_employee`)
   ON DELETE CASCADE
   ON UPDATE CASCADE)
 ENGINE = InnoDB

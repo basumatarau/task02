@@ -89,7 +89,6 @@ public class DBInit {
         populateCities(con, psCities, psSelectCountryById, 6);
         populateAddresses(con, psAddresses, psSelectCityById, 10);
         populateCompanies(con, psCompanies, 200);
-        populatePositions(con, psPosition, 400);
         populateEmployees(con, psEmployees, 2000);
 
         //30% of the employees table entries is taken for each overlay iteration
@@ -104,8 +103,13 @@ public class DBInit {
                                                  int maxOverlay,
                                                  Connection con) throws SQLException {
 
+        List<String> jobPos = new ArrayList<>();
+        RandomGenerators.PositionNameGen positionGen = new RandomGenerators.PositionNameGen();
+        for (int i = 0; i < 300; i++) {
+            jobPos.add(positionGen.next());
+        }
+
         List<Integer> idsEmployee = getTablePKEntries("employees", con, "id_employee");
-        List<Integer> idsJobPos = getTablePKEntries("job_positions", con, "id_job_position");
         List<Integer> idsCompany = getTablePKEntries("companies", con, "id_company");
         List<Integer> idsAddress = getTablePKEntries("addresses", con, "id_address");
 
@@ -113,7 +117,7 @@ public class DBInit {
                 "INSERT INTO `task02`.`%s` (`%s`, `%s`, `%s`, `%s`) VALUES(?,?,?,?)",
                 joinTableName,
                 "fid_employee",
-                "fid_job_position",
+                "job_position",
                 "fid_company",
                 "fid_address"
         );
@@ -122,17 +126,17 @@ public class DBInit {
         con.setAutoCommit(false);
 
         try {
-            HashSet<TupleOfFour<Integer, Integer, Integer, Integer>> duplicateRegister = new HashSet<>();
-            HashSet<TupleOfFour<Integer, Integer, Integer, Integer>> toBePermuted = new HashSet<>();
+            HashSet<TupleOfFour<Integer, String, Integer, Integer>> duplicateRegister = new HashSet<>();
+            HashSet<TupleOfFour<Integer, String, Integer, Integer>> toBePermuted = new HashSet<>();
             for (int i = 0; i < maxOverlay; i++) {
                 LinkedList<Integer> cpIdsEmployee = new LinkedList<>(idsEmployee);
-                List<Integer> cpIdsJobPos = new ArrayList<>(idsJobPos);
+                List<String> cpJobPos = new ArrayList<>(jobPos);
                 List<Integer> cpIdsCompany = new ArrayList<>(idsCompany);
                 List<Integer> cpIdsAddress = new ArrayList<>(idsAddress);
 
-                for (TupleOfFour<Integer, Integer, Integer, Integer> tuple : toBePermuted) {
+                for (TupleOfFour<Integer, String, Integer, Integer> tuple : toBePermuted) {
                     cpIdsEmployee.add(tuple.one);
-                    cpIdsJobPos.add(tuple.two);
+                    cpJobPos.add(tuple.two);
                     cpIdsCompany.add(tuple.three);
                     cpIdsAddress.add(tuple.four);
                 }
@@ -147,11 +151,11 @@ public class DBInit {
                     }
 
                     Integer fidEmployee = cpIdsEmployee.pop();
-                    Integer fidJobPos = cpIdsJobPos.remove(random.nextInt(cpIdsJobPos.size()));
+                    String fidJobPos = cpJobPos.remove(random.nextInt(cpJobPos.size()));
                     Integer fidCompany = cpIdsCompany.remove(random.nextInt(cpIdsCompany.size()));
                     Integer fidAddress = cpIdsAddress.remove(random.nextInt(cpIdsAddress.size()));
-                    if (cpIdsJobPos.isEmpty()) {
-                        cpIdsJobPos.addAll(idsJobPos);
+                    if (cpJobPos.isEmpty()) {
+                        cpJobPos.addAll(jobPos);
                     }
                     if (cpIdsCompany.isEmpty()) {
                         cpIdsCompany.addAll(idsCompany);
@@ -160,7 +164,7 @@ public class DBInit {
                         cpIdsAddress.addAll(idsAddress);
                     }
 
-                    TupleOfFour<Integer, Integer, Integer, Integer> tuple
+                    TupleOfFour<Integer, String, Integer, Integer> tuple
                             = new TupleOfFour<>(fidEmployee, fidJobPos, fidCompany, fidAddress);
                     if(duplicateRegister.contains(tuple)){
                         toBePermuted.add(tuple);
@@ -169,7 +173,7 @@ public class DBInit {
                     duplicateRegister.add(tuple);
 
                     psUpdateJoinTable.setInt(1, fidEmployee);
-                    psUpdateJoinTable.setInt(2, fidJobPos);
+                    psUpdateJoinTable.setString(2, fidJobPos);
                     psUpdateJoinTable.setInt(3, fidCompany);
                     psUpdateJoinTable.setInt(4, fidAddress);
                     psUpdateJoinTable.executeUpdate();
@@ -206,22 +210,6 @@ public class DBInit {
             pkOne.add(resultSet.getString("Column_name"));
         }
         return pkOne;
-    }
-
-    private static void populatePositions(Connection con,
-                                          PreparedStatement psPositions,
-                                          int capacity) throws SQLException {
-        try {
-            for (int i = 1; i <= capacity; i++) {
-                RandomGenerators.PositionGen positionGen = new RandomGenerators.PositionGen();
-                psPositions.setString(1, positionGen.next().getName());
-                psPositions.executeUpdate();
-            }
-            con.commit();
-        } catch (SQLException e) {
-            con.rollback();
-            throw new RuntimeException();
-        }
     }
 
     private static void populateEmployees(Connection con,

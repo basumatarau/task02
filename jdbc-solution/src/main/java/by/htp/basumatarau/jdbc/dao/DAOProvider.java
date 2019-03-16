@@ -11,7 +11,7 @@ public class DAOProvider {
     private static DAO<Address, Integer> addressDAO;
     private static DAO<Company, Integer> companyDAO;
     private static DAO<Employee, Integer> employeeDAO;
-    private static DAO<Position, Integer> positionDAO;
+    private static DAO<RegisteredEmployee, Integer> positionDAO;
 
     private DAOProvider(){}
 
@@ -39,9 +39,6 @@ public class DAOProvider {
         return employeeDAO;
     }
 
-    public DAO<Position, Integer> getPositionDAO() {
-        return positionDAO;
-    }
 
     public static DAOProvider getProvider(){
         if(providerInstance == null){
@@ -53,7 +50,6 @@ public class DAOProvider {
                     addressDAO = new AddressDAOImpl();
                     companyDAO = new CompanyDAOImpl();
                     employeeDAO = new EmployeeDAOImpl();
-                    positionDAO = new PositionDAOImpl();
                 }
             }
         }

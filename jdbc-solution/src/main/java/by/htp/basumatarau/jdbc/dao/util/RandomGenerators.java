@@ -156,7 +156,7 @@ class RandomGenerators {
             return employee;
         }
     }
-    public static class PositionGen implements Generator<Position>{
+    public static class PositionNameGen {
         private final List<String> EMPLOYEE_POSITIONS = new ArrayList<>();
 
         {
@@ -171,17 +171,13 @@ class RandomGenerators {
                 throw new RuntimeException(e);
             }
         }
-        @Override
-        public Position next() {
-            Position position = new Position();
-            position.setName(
-                    EMPLOYEE_POSITIONS.get(
-                            Math.abs(
-                                    rand.nextInt() % EMPLOYEE_POSITIONS.size()
-                            )
+
+        public String next() {
+            return EMPLOYEE_POSITIONS.get(
+                    Math.abs(
+                            rand.nextInt() % EMPLOYEE_POSITIONS.size()
                     )
             );
-            return position;
         }
     }
 }
