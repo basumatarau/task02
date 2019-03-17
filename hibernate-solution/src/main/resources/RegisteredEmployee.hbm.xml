@@ -4,7 +4,7 @@
 
 
 <hibernate-mapping>
-    <class name="by.htp.basumatarau.hibernate.dao.beans.RegisteredEmployee" table="employee_register">
+    <class name="com.htp.basumatarau.hibernate.dao.beans.RegisteredEmployee" table="employee_register">
 
         <meta attribute="class-description">
             This class contains the registered employee detail.
@@ -17,20 +17,17 @@
 
         <many-to-one name="employee"
                      column="fid_employee"
-                     class="by.htp.basumatarau.hibernate.dao.beans.Employee"
-                     lazy="false"
+                     class="com.htp.basumatarau.hibernate.dao.beans.Employee"
                      cascade="all"/>
 
         <many-to-one name="address"
                      column="fid_address"
-                     class="by.htp.basumatarau.hibernate.dao.beans.Address"
-                     lazy="false"
+                     class="com.htp.basumatarau.hibernate.dao.beans.Address"
                      cascade="all"/>
 
         <many-to-one name="company"
                      column="fid_company"
-                     class="by.htp.basumatarau.hibernate.dao.beans.Company"
-                     lazy="false"
+                     class="com.htp.basumatarau.hibernate.dao.beans.Company"
                      cascade="all"/>
 
     </class>

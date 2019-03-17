@@ -4,7 +4,7 @@
 
 
 <hibernate-mapping>
-	<class name="by.htp.basumatarau.hibernate.dao.beans.Company" table="companies">
+	<class name="com.htp.basumatarau.hibernate.dao.beans.Company" table="companies">
 
 		<meta attribute="class-description">
 			This class contains the address detail.

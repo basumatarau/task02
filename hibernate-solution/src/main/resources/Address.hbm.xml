@@ -4,7 +4,7 @@
 
 
 <hibernate-mapping>
-	<class name="by.htp.basumatarau.hibernate.dao.beans.Address" table="addresses">
+	<class name="com.htp.basumatarau.hibernate.dao.beans.Address" table="addresses">
 
 		<meta attribute="class-description">
 			This class contains the address detail.
@@ -14,8 +14,10 @@
 		</id>
 		<property name="address" column="address" type="string" />
 
-		<many-to-one name="city" cascade="all" lazy="false"
-					 class="by.htp.basumatarau.hibernate.dao.beans.City" column="fid_city" />
+		<many-to-one name="city"
+					 column="fid_city"
+					 class="com.htp.basumatarau.hibernate.dao.beans.City"
+					 cascade="all"/>
 
 	</class>
 </hibernate-mapping>

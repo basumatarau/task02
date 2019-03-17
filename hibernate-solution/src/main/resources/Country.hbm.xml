@@ -4,7 +4,7 @@
 
 
 <hibernate-mapping>
-	<class name="by.htp.basumatarau.hibernate.dao.beans.Country" table="countries">
+	<class name="com.htp.basumatarau.hibernate.dao.beans.Country" table="countries">
 
 		<meta attribute="class-description">
 			This class contains the country detail.
