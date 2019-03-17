@@ -24,7 +24,6 @@ public class RegisteredEmployeeDAOImpl
                         "join fetch emp.employee " +
                         "join fetch emp.address " +
                         "join fetch emp.company " +
-                        "join fetch emp.position " +
                         "where emp.id=:id");
         query.setParameter("id", id);
         Object result = query.getSingleResult();
@@ -47,7 +46,7 @@ public class RegisteredEmployeeDAOImpl
                         "join fetch emp.employee " +
                         "join fetch emp.address " +
                         "join fetch emp.company " +
-                        "join fetch emp.position " +
+                        " " +
                         "where emp.id>:lowLimit " +
                         "and emp.id<:uppLimit " +
                         "order by emp.employee.employeeId");

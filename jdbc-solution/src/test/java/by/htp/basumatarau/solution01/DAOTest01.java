@@ -17,7 +17,15 @@ import java.util.Map;
 public class DAOTest01 {
 
     @Test
-    public void EmployeeQueryTest() throws PersistenceException {
+    public void EmployeeQueryTest02() throws PersistenceException {
+
+        for (String tuple : new EmployeeDAOImpl().getSimipleDetailed(100, 0)) {
+            System.out.println(tuple);
+        }
+    }
+
+    @Test
+    public void EmployeeQueryTest01() throws PersistenceException {
         for (Map.Entry<TupleOfFour<Employee, Address, City, Country>,
                 List<TupleOfSix<Company, City, Country, Address, Integer, RegisteredEmployee>>>
                 entry

@@ -85,10 +85,10 @@ public class DBInit {
         PreparedStatement psSelectCityById
                 = con.prepareStatement(SELECT_CITY_BY_ID);
 
-        populateCountries(con, psCountries, 5);
-        populateCities(con, psCities, psSelectCountryById, 6);
-        populateAddresses(con, psAddresses, psSelectCityById, 10);
-        populateCompanies(con, psCompanies, 200);
+        populateCountries(con, psCountries, 2);
+        populateCities(con, psCities, psSelectCountryById, 4);
+        populateAddresses(con, psAddresses, psSelectCityById, 8);
+        populateCompanies(con, psCompanies, 40);
         populateEmployees(con, psEmployees, 2000);
 
         //30% of the employees table entries is taken for each overlay iteration

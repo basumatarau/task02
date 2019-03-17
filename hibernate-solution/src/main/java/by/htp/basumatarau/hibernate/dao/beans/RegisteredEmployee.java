@@ -1,11 +1,13 @@
 package by.htp.basumatarau.hibernate.dao.beans;
 
+import java.util.Objects;
+
 public class RegisteredEmployee {
     private int id;
     private Employee employee;
     private Address address;
     private Company company;
-    private Position position;
+    private String jobPosition;
 
     public int getId() {
         return id;
@@ -39,11 +41,28 @@ public class RegisteredEmployee {
         this.company = company;
     }
 
-    public Position getPosition() {
-        return position;
+    public String getJobPosition() {
+        return jobPosition;
     }
 
-    public void setPosition(Position position) {
-        this.position = position;
+    public void setJobPosition(String jobPosition) {
+        this.jobPosition = jobPosition;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RegisteredEmployee that = (RegisteredEmployee) o;
+        return id == that.id &&
+                Objects.equals(employee, that.employee) &&
+                Objects.equals(address, that.address) &&
+                Objects.equals(company, that.company) &&
+                Objects.equals(jobPosition, that.jobPosition);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, employee, address, company, jobPosition);
     }
 }

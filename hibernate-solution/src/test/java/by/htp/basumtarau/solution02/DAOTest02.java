@@ -29,7 +29,7 @@ public class DAOTest02 {
             System.out.print(empEntry.getAddress().getCity().getCity() + " ");
             System.out.print(empEntry.getAddress().getCity().getCountry().getCountry() + " ");
             System.out.print(empEntry.getAddress().getAddress() + " ");
-            System.out.print(empEntry.getPosition().getName() + "\n");
+            System.out.print(empEntry.getJobPosition() + "\n");
         }
     }
 
@@ -44,7 +44,7 @@ public class DAOTest02 {
             System.out.print(regEmp.getAddress().getCity().getCity() + " ");
             System.out.print(regEmp.getAddress().getCity().getCountry().getCountry() + " ");
             System.out.print(regEmp.getAddress().getAddress() + " ");
-            System.out.print(regEmp.getPosition().getName() + "\n");
+            System.out.print(regEmp.getJobPosition() + "\n");
         }
     }
 
@@ -60,7 +60,7 @@ public class DAOTest02 {
                 System.out.print(regEmp.getAddress().getCity().getCity() + " ");
                 System.out.print(regEmp.getAddress().getCity().getCountry().getCountry() + " ");
                 System.out.print(regEmp.getAddress().getAddress() + " ");
-                System.out.print(regEmp.getPosition().getName() + "\n");
+                System.out.print(regEmp.getJobPosition() + "\n");
             }
         }
     }

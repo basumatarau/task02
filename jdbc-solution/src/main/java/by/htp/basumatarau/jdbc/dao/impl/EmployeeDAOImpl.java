@@ -53,35 +53,52 @@ public class EmployeeDAOImpl implements DAO<Employee, Integer> {
             "\tJOIN countries \n" +
             "\t\tON cities.fid_country = countries.id_country\n" +
             "\tORDER BY employees.id_employee\n" +
-            "\tLIMIT ?,?) \n" +
+            "\tLIMIT ?, ?) \n" +
             "\tAS interim \n" +
-            "\t\tJOIN (SELECT fid_address AS fid_officeAddress, fid_company, job_position, fid_employee FROM employee_register) AS reg\n" +
+            "\t\tJOIN (SELECT fid_address AS fid_officeAddress, id_register_entry, \n" +
+            "\t\t\t\tfid_company, job_position, fid_employee FROM employee_register) \n" +
+            "            AS reg\n" +
             "\t\t\tON interim.id_employee = reg.fid_employee\n" +
-            "\t\tJOIN (SELECT address AS officeAddress, id_address as id_officeAddress, fid_city as fid_officeCity FROM addresses) AS officeAddress\n" +
+            "\t\tJOIN (SELECT address AS officeAddress,\n" +
+            "\t\t\t\tid_address AS id_officeAddress,\n" +
+            "\t\t\t\tfid_city AS fid_officeCity FROM addresses) \n" +
+            "            AS officeAddress\n" +
             "\t\t\tON officeAddress.id_officeAddress = reg.fid_officeAddress\n" +
-            "\t\tJOIN (SELECT city AS officeCity, id_city as id_officeCity, fid_country as fid_officeCountry FROM cities) AS cty\n" +
+            "\t\tJOIN (SELECT city AS officeCity,\n" +
+            "\t\t\t\tid_city AS id_officeCity,\n" +
+            "\t\t\t\tfid_country AS fid_officeCountry FROM cities)\n" +
+            "\t\t\tAS cty\n" +
             "\t\t\tON officeAddress.fid_officeCity = cty.id_officeCity\n" +
-            "\t\tJOIN (SELECT country AS officeCountry, id_country AS id_officeCountry FROM countries) AS cntry\n" +
+            "\t\tJOIN (SELECT country AS officeCountry,\n" +
+            "\t\t\tid_country AS id_officeCountry FROM countries)\n" +
+            "            AS cntry\n" +
             "\t\t\tON cty.fid_officeCountry = cntry.id_officeCountry\n" +
-            "\t\tJOIN (SELECT name AS company_name, id_company FROM companies) AS cmp\n" +
+            "\t\tJOIN (SELECT name AS company_name, id_company FROM companies)\n" +
+            "\t\t\tAS cmp\n" +
             "\t\t\tON cmp.id_company = reg.fid_company\n" +
-            "\t\tJOIN (SELECT fid_company, COUNT(DISTINCT fid_address) as officeStaff FROM employee_register GROUP BY fid_company) countSheet\n" +
-            "\t\t\tON countSheet.fid_company = reg.fid_company ";
+            "\t\tJOIN (SELECT \n" +
+            "\t\t\t\tid_register_entry AS id,\n" +
+            "\t\t\t\tCOUNT(fid_address) OVER (PARTITION BY fid_company, fid_address) AS officeStaff \n" +
+            "\t\t\t\tFROM employee_register \n" +
+            "\t\t\t\tGROUP BY id_register_entry)\n" +
+            "            AS countSheet\n" +
+            "\t\t\tON countSheet.id = reg.id_register_entry ";
 
     private final static String SELECT_EMPLOYEES_DETAILED_SIMPLE
             ="SELECT \n" +
-            "id_employee,\n" +
-            "first_name,\n" +
-            "last_name,\n" +
-            "address, \n" +
-            "city, \n" +
-            "country,\n" +
-            "company_name,\n" +
-            "officeAddress,\n" +
-            "officeCity,\n" +
-            "officeCountry,\n" +
-            "officeStaff,\n" +
-            "job_position\n" +
+            "CONCAT(first_name, \" \", last_name)\n" +
+            " AS `name`,\n" +
+            "CONCAT(\"; address: \", address,\n" +
+            "\t \", \", city,\n" +
+            "\t \" (\", country, \")\")\n" +
+            " AS `address`,\n" +
+            "CONCAT(\"office: \", company_name,\n" +
+            "\t \"@\", officeAddress,\n" +
+            "\t \", \", officeCity,\n" +
+            "\t \" \", officeCountry,\n" +
+            "\t \" staff: \", officeStaff,\n" +
+            "\t \"; job pos.: \", job_position)\n" +
+            " AS `office`\n" +
             "FROM (SELECT *\n" +
             "\tFROM employees\n" +
             "\tJOIN addresses \n" +
@@ -91,20 +108,59 @@ public class EmployeeDAOImpl implements DAO<Employee, Integer> {
             "\tJOIN countries \n" +
             "\t\tON cities.fid_country = countries.id_country\n" +
             "\tORDER BY employees.id_employee\n" +
-            "\tLIMIT ?,?) \n" +
+            "\tLIMIT ?, ?) \n" +
             "\tAS interim \n" +
-            "\t\tJOIN (SELECT fid_address AS fid_officeAddress, fid_company, job_position, fid_employee FROM employee_register) AS reg\n" +
+            "\t\tJOIN (SELECT fid_address AS fid_officeAddress, id_register_entry, \n" +
+            "\t\t\t\tfid_company, job_position, fid_employee FROM employee_register) \n" +
+            "            AS reg\n" +
             "\t\t\tON interim.id_employee = reg.fid_employee\n" +
-            "\t\tJOIN (SELECT address AS officeAddress, id_address as id_officeAddress, fid_city as fid_officeCity FROM addresses) AS officeAddress\n" +
+            "\t\tJOIN (SELECT address AS officeAddress,\n" +
+            "\t\t\t\tid_address AS id_officeAddress,\n" +
+            "\t\t\t\tfid_city AS fid_officeCity FROM addresses) \n" +
+            "            AS officeAddress\n" +
             "\t\t\tON officeAddress.id_officeAddress = reg.fid_officeAddress\n" +
-            "\t\tJOIN (SELECT city AS officeCity, id_city as id_officeCity, fid_country as fid_officeCountry FROM cities) AS cty\n" +
+            "\t\tJOIN (SELECT city AS officeCity,\n" +
+            "\t\t\t\tid_city AS id_officeCity,\n" +
+            "\t\t\t\tfid_country AS fid_officeCountry FROM cities)\n" +
+            "\t\t\tAS cty\n" +
             "\t\t\tON officeAddress.fid_officeCity = cty.id_officeCity\n" +
-            "\t\tJOIN (SELECT country AS officeCountry, id_country AS id_officeCountry FROM countries) AS cntry\n" +
+            "\t\tJOIN (SELECT country AS officeCountry,\n" +
+            "\t\t\tid_country AS id_officeCountry FROM countries)\n" +
+            "            AS cntry\n" +
             "\t\t\tON cty.fid_officeCountry = cntry.id_officeCountry\n" +
-            "\t\tJOIN (SELECT name AS company_name, id_company FROM companies) AS cmp\n" +
+            "\t\tJOIN (SELECT name AS company_name, id_company FROM companies)\n" +
+            "\t\t\tAS cmp\n" +
             "\t\t\tON cmp.id_company = reg.fid_company\n" +
-            "\t\tJOIN (SELECT fid_company, COUNT(DISTINCT fid_address) as officeStaff FROM employee_register GROUP BY fid_company) countSheet\n" +
-            "\t\t\tON countSheet.fid_company = reg.fid_company";
+            "\t\tJOIN (SELECT \n" +
+            "\t\t\t\tid_register_entry AS id,\n" +
+            "\t\t\t\tCOUNT(fid_address) OVER (PARTITION BY fid_company, fid_address) AS officeStaff \n" +
+            "\t\t\t\tFROM employee_register \n" +
+            "\t\t\t\tGROUP BY id_register_entry)\n" +
+            "            AS countSheet\n" +
+            "\t\t\tON countSheet.id = reg.id_register_entry ";
+
+    public List<String> getSimipleDetailed(int numEntries, int startingFrom) throws PersistenceException {
+        ArrayList<String> result = new ArrayList<>();
+        try (Connection con = ConnectionSource.yieldConnection()){
+            PreparedStatement ps = con.prepareStatement(SELECT_EMPLOYEES_DETAILED_SIMPLE);
+            ps.setInt(1, startingFrom);
+            ps.setInt(2, numEntries);
+            ResultSet resultSet = ps.executeQuery();
+
+            while(resultSet.next()){
+                StringBuilder sb = new StringBuilder();
+                sb.append(resultSet.getString("name"))
+                        .append(resultSet.getString("address"))
+                        .append(resultSet.getString("office"));
+                result.add(sb.toString());
+                sb.setLength(0);
+            }
+        } catch (SQLException e) {
+            log.error(e.getMessage());
+            throw new PersistenceException(e);
+        }
+        return result;
+    }
 
     public Map<TupleOfFour<Employee, Address, City, Country>,
             List<TupleOfSix<Company, City, Country, Address, Integer, RegisteredEmployee>>>
