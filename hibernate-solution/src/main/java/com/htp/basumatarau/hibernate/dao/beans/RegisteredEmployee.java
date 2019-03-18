@@ -50,6 +50,17 @@ public class RegisteredEmployee {
     }
 
     @Override
+    public String toString() {
+        return  "#" + employee.getEmployeeId() + ". " + '\'' +
+                employee.getFirstName() +
+                " " + employee.getLastName() + '\'' +
+                ", " + '\'' + employee.getCurrentAddress() + '\'' +
+                ", " + company +
+                " " + address +
+                ", jobTitle: " + jobPosition;
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;

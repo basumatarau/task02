@@ -16,17 +16,22 @@ public class EmployeeDAOImpl extends BaseDAO implements DAO<Employee, Integer> {
 
     @Override
     public Employee read(Integer id) {
-        //TODO ?!
-        openCurrentSession();
-        Query query = getCurrentSession().createQuery(
-                "from Employee emp " +
-                "join fetch emp.registeredEmployees " +
-                "join fetch emp.currentAddress " +
-                "where emp.id=:id");
-        query.setParameter("id", id);
-        Object result = query.getSingleResult();
-        closeCurrentSession();
-        return ((Employee) result);
+        Employee result;
+        try {
+            openCurrentSession();
+            Query query = getCurrentSession().createQuery(
+                    "from Employee emp " +
+                            "join fetch emp.registeredEmployees " +
+                            "join fetch emp.currentAddress " +
+                            "join fetch emp.currentAddress.city " +
+                            "join fetch emp.currentAddress.city.country " +
+                            "where emp.id=:id");
+            query.setParameter("id", id);
+            result = (Employee) query.getSingleResult();
+        }finally {
+            closeCurrentSession();
+        }
+        return result;
     }
 
     @Override

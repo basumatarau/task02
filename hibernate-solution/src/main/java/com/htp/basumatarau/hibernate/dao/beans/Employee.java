@@ -61,6 +61,15 @@ public class Employee {
     }
 
     @Override
+    public String toString() {
+        return  "#" + employeeId +
+                ". " + firstName + '\'' +
+                " " + lastName + '\'' +
+                ", " + currentAddress +
+                ", office:" + registeredEmployees;
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;

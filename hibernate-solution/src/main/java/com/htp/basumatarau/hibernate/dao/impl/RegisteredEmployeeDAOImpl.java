@@ -2,13 +2,12 @@ package com.htp.basumatarau.hibernate.dao.impl;
 
 import com.htp.basumatarau.hibernate.dao.DAO;
 import com.htp.basumatarau.hibernate.dao.beans.RegisteredEmployee;
-import com.htp.basumatarau.hibernate.dao.dto.EmployeeDTO;
+import com.htp.basumatarau.hibernate.dao.dto.EmployeeDetailDTO;
 import com.htp.basumatarau.hibernate.dao.exception.PersistenceException;
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
-import org.hibernate.cfg.Configuration;
 import org.hibernate.query.Query;
 
+import javax.persistence.Tuple;
+import java.util.ArrayList;
 import java.util.List;
 
 public class RegisteredEmployeeDAOImpl
@@ -21,19 +20,26 @@ public class RegisteredEmployeeDAOImpl
 
     @Override
     public RegisteredEmployee read(Integer id) throws PersistenceException {
-        openCurrentSession();
-
-        Query query = getCurrentSession().createQuery(
-                "from RegisteredEmployee emp " +
-                        "join fetch emp.employee " +
-                        "join fetch emp.address " +
-                        "join fetch emp.company " +
-                        "where emp.id=:id");
-        query.setParameter("id", id);
-        Object result = query.getSingleResult();
-
-        closeCurrentSession();
-        return ((RegisteredEmployee) result);
+        RegisteredEmployee result;
+        try{
+            openCurrentSession();
+            Query query = getCurrentSession().createQuery(
+                    "from RegisteredEmployee emp " +
+                            "join fetch emp.employee " +
+                            "join fetch emp.employee.currentAddress " +
+                            "join fetch emp.employee.currentAddress.city " +
+                            "join fetch emp.employee.currentAddress.city.country " +
+                            "join fetch emp.address " +
+                            "join fetch emp.address.city " +
+                            "join fetch emp.address.city.country " +
+                            "join fetch emp.company " +
+                            "where emp.employee.employeeId=:id ");
+            query.setParameter("id", id);
+            result = (RegisteredEmployee) query.getSingleResult();
+        }finally {
+            closeCurrentSession();
+        }
+        return result;
     }
 
     @Override
@@ -43,53 +49,85 @@ public class RegisteredEmployeeDAOImpl
 
     @Override
     public List<RegisteredEmployee> read(int entries, int startingFrom) throws PersistenceException {
-        openCurrentSession();
-        Query query = getCurrentSession().createQuery(
-                "from RegisteredEmployee emp " +
-                        "join fetch emp.employee " +
-                        "join fetch emp.employee.currentAddress " +
-                        "join fetch emp.employee.currentAddress.city " +
-                        "join fetch emp.employee.currentAddress.city.country " +
-                        "join fetch emp.address " +
-                        "join fetch emp.address.city " +
-                        "join fetch emp.address.city.country " +
-                        "join fetch emp.company " +
-                        "where emp.employee.employeeId>:lowLimit " +
-                        "and emp.employee.employeeId<=:uppLimit " +
-                        "order by emp.employee.employeeId");
-        query.setParameter("lowLimit", startingFrom);
-        query.setParameter("uppLimit", startingFrom + entries);
-        List resultList = query.getResultList();
-
-        closeCurrentSession();
-        return ((List<RegisteredEmployee>) resultList);
+        List<RegisteredEmployee> resultList;
+        try {
+            openCurrentSession();
+            Query query = getCurrentSession().createQuery(
+                    "from RegisteredEmployee emp " +
+                            "join fetch emp.employee " +
+                            "join fetch emp.employee.currentAddress " +
+                            "join fetch emp.employee.currentAddress.city " +
+                            "join fetch emp.employee.currentAddress.city.country " +
+                            "join fetch emp.address " +
+                            "join fetch emp.address.city " +
+                            "join fetch emp.address.city.country " +
+                            "join fetch emp.company " +
+                            "where emp.employee.employeeId>:lowLimit " +
+                            "and emp.employee.employeeId<=:uppLimit " +
+                            "order by emp.employee.employeeId");
+            query.setParameter("lowLimit", startingFrom);
+            query.setParameter("uppLimit", startingFrom + entries);
+            resultList = (List<RegisteredEmployee>) query.getResultList();
+        }finally {
+            closeCurrentSession();
+        }
+        return resultList;
     }
 
-    public List<EmployeeDTO> readDTO(int entries, int startingFrom) throws PersistenceException {
-        openCurrentSession();
-        //TODO numOfficeStuff query fix
-        Query<EmployeeDTO> query = getCurrentSession().createQuery(
-                "select new com.htp.basumatarau.hibernate.dao.dto.EmployeeDTO(" +
-                        "emp.employee.firstName, " +
-                        "emp.employee.lastName, " +
-                        "emp.employee.currentAddress.address, " +
-                        "emp.employee.currentAddress.city.city, " +
-                        "emp.employee.currentAddress.city.country.country, " +
-                        "emp.company.name, " +
-                        "emp.address.address, " +
-                        "emp.address.city.city, " +
-                        "emp.address.city.country.country, " +
-                        "9999, " +
-                        "emp.jobPosition" +
-                        ") from RegisteredEmployee emp " +
-                        "where emp.employee.employeeId>:lowLimit " +
-                        "and emp.employee.employeeId<=:uppLimit " ,
-                EmployeeDTO.class);
+    public List<EmployeeDetailDTO> readDTO(int entries, int startingFrom) throws PersistenceException {
+        ArrayList<EmployeeDetailDTO> resultList;
+        try {
+            openCurrentSession();
+            Query<Tuple> query = getCurrentSession().createQuery(
+                    "select " +
+                            "emp.employee.firstName as firstName, " +
+                            "emp.employee.lastName as lastName, " +
+                            "emp.employee.currentAddress.address as currentAddress, " +
+                            "emp.employee.currentAddress.city.city as currentCity, " +
+                            "emp.employee.currentAddress.city.country.country as currentCountry, " +
+                            "emp.company.name as companyName, " +
+                            "emp.address.address as companyAddress, " +
+                            "emp.address.city.city as companyCity, " +
+                            "emp.address.city.country.country as companyCountry, " +
+                            "count(distinct emp.employee.employeeId) as officeStaff, " +
+                            "emp.jobPosition as jobPosition " +
+                            "from RegisteredEmployee emp " +
+                            "group by emp.company.companyId, emp.address.address.id " +
+                            "order by emp.employee.employeeId ",
+                    Tuple.class);
+            query.setFirstResult(startingFrom);
+            query.setMaxResults(entries);
+            resultList = new ArrayList<>();
+            for (Tuple tuple : query.getResultList()) {
+                String firstName = (String) tuple.get("firstName");
+                String lastName = (String) tuple.get("lastName");
+                String currentAddress = (String) tuple.get("currentAddress");
+                String currentCity = (String) tuple.get("currentCity");
+                String currentCountry = (String) tuple.get("currentCountry");
+                String companyName = (String) tuple.get("companyName");
+                String companyAddress = (String) tuple.get("companyAddress");
+                String companyCity = (String) tuple.get("companyCity");
+                String companyCountry = (String) tuple.get("companyCountry");
+                Long officeStaff = (Long) tuple.get("officeStaff");
+                String jobPosition = (String) tuple.get("jobPosition");
+                resultList.add(
+                        new EmployeeDetailDTO(firstName,
+                                lastName,
+                                currentAddress,
+                                currentCity,
+                                currentCountry,
+                                companyName,
+                                companyAddress,
+                                companyCity,
+                                companyCountry,
+                                officeStaff,
+                                jobPosition)
+                );
+            }
+        }finally {
+            closeCurrentSession();
+        }
 
-        query.setParameter("lowLimit", 10);
-        query.setParameter("uppLimit", 10 + 10);
-        List<EmployeeDTO> resultList = query.getResultList();
-        closeCurrentSession();
         return resultList;
     }
 
